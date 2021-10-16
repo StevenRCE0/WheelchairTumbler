@@ -19,6 +19,9 @@ def openPort(definedPortHandler):
         quit()
     else:
         print("Succeeded to open the port")
+        
+def closePort(definedPortHandler):
+    definedPortHandler.closePort()
 
 def setBaudRate(definedPortHandler, targetBaudRate):
     try:
