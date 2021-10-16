@@ -2,6 +2,7 @@ import math
 from dynamixel_sdk import *  # Uses Dynamixel SDK library
 import time
 import init
+import device
 # Control table address
 # Control table address
 ADDR_MX_CW                   = 6
@@ -22,8 +23,7 @@ PROTOCOL_VERSION            = 1.0  # See which protocol version is used in the D
 
 # BAUDRATE                    = 57600             # Dynamixel default baudrate : 57600
 BAUDRATE = 115200 # Dynamixel default baudrate : 57600
-DEVICENAME = 'COM4'  # Check which port is being used on your controller
-# ex) Windows: "COM1"   Linux: "/dev/ttyUSB0" Mac: "/dev/tty.usbserial-*"
+DEVICENAME = device()
 
 TORQUE_ENABLE = 1  # Value for enabling the torque
 TORQUE_DISABLE = 0  # Value for disabling the torque

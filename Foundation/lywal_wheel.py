@@ -1,4 +1,6 @@
 import math
+from Foundation.lywal_trot import DEVICENAME
+import device
 #from msvcrt import getch
 from dynamixel_sdk import *  # Uses Dynamixel SDK library
 
@@ -27,8 +29,7 @@ DXL_ID7                      = 7           #Dynamixel ID: 1
 DXL_ID8                      = 8
 # BAUDRATE                    = 57600             # Dynamixel default baudrate : 57600
 BAUDRATE = 115200 # Dynamixel default baudrate : 57600
-DEVICENAME = 'COM4'  # Check which port is being used on your controller
-# ex) Windows: "COM1"   Linux: "/dev/ttyUSB0" Mac: "/dev/tty.usbserial-*"
+DEVICENAME = device()
 
 TORQUE_ENABLE = 1  # Value for enabling the torque
 TORQUE_DISABLE = 0  # Value for disabling the torque
