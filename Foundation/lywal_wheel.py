@@ -1,7 +1,6 @@
 import math
-from Foundation.lywal_trot import DEVICENAME
+from lywal_trot import DEVICENAME
 import device
-#from msvcrt import getch
 from dynamixel_sdk import *  # Uses Dynamixel SDK library
 
 # Control table address
@@ -29,7 +28,7 @@ DXL_ID7                      = 7           #Dynamixel ID: 1
 DXL_ID8                      = 8
 # BAUDRATE                    = 57600             # Dynamixel default baudrate : 57600
 BAUDRATE = 115200 # Dynamixel default baudrate : 57600
-DEVICENAME = device()
+DEVICENAME = device.device()
 
 TORQUE_ENABLE = 1  # Value for enabling the torque
 TORQUE_DISABLE = 0  # Value for disabling the torque
@@ -47,7 +46,9 @@ VELOCITY_MODE = 1
 POSITION_MODE = 3
 index = 0
 #dxl_goal_position = [DXL_MINIMUM_POSITION_VALUE, DXL_MAXIMUM_POSITION_VALUE]  # Goal position
-def switch_torque(id_list, switch):                                                                 #开扭矩
+
+#开扭矩
+def switch_torque(id_list, switch):
     if switch == 'enable':
         for id in id_list:
             dxl_comm_result, dxl_error = packetHandler.write1ByteTxRx(portHandler, id, ADDR_MX_TORQUE_ENABLE,
