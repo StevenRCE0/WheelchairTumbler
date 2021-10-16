@@ -1,6 +1,6 @@
 import math
+import Foundation.zhengjie as zhengjie
 
-import zhengjie
 def nijie(x,y):
     r=9.0
     a=9.0

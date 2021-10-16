@@ -87,15 +87,7 @@ if __name__ == '__main__':
     portHandler = PortHandler(DEVICENAME)
     packetHandler = PacketHandler(PROTOCOL_VERSION)
     openPort(portHandler)
-
-    # Set port baudrate
-    if portHandler.setBaudRate(BAUDRATE):                                            #设置波特率
-        print("Succeeded to change the baudrate")
-    else:
-        print("Failed to change the baudrate")
-        print("Press any key to terminate...")
-        getch()
-        quit()
+    setBaudRate(portHandler, BAUDRATE)
 
     id_list = [i for i in range(1,9)]
     switch_torque(id_list,'enable')                              #开扭矩

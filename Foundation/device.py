@@ -11,7 +11,7 @@ def device():
 
 def openPort(definedPortHandler):
     try:
-        definedPortHandler.openPort()                                                    #开启端口
+        definedPortHandler.openPort()
     except:
         print("Failed to open the port")
         print("Press any key to terminate...")
@@ -19,6 +19,17 @@ def openPort(definedPortHandler):
         quit()
     else:
         print("Succeeded to open the port")
+
+def setBaudRate(definedPortHandler, targetBaudRate):
+    try:
+        definedPortHandler.setBaudRate(targetBaudRate)
+    except:
+        print("Failed to change the baudrate")
+        print("Press any key to terminate...")
+        getch()
+        quit()
+    else:
+        print("Succeeded to change the baudrate")
 
 class getch():
     def __init__(self):

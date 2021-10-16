@@ -1,7 +1,7 @@
-import nijie
-import trot_new2
-import trot_new3
-import trot_new4
+import Foundation.nijie as nijie
+import Foundation.trot_new2 as trot_new2
+import Foundation.trot_new3 as trot_new3
+import Foundation.trot_new4 as trot_new4
 import matplotlib.pyplot as plt
 
 def init(T,detT):
