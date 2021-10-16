@@ -1,6 +1,7 @@
 import math
 from dynamixel_sdk import *  # Uses Dynamixel SDK library
 import time
+from Foundation.device import openPort
 import init
 import device
 # Control table address
@@ -109,13 +110,7 @@ if __name__ == '__main__':
     packetHandler = PacketHandler(PROTOCOL_VERSION)
 
     # Open port
-    if portHandler.openPort():                                                     #开启端口
-        print("Succeeded to open the port")
-    else:
-        print("Failed to open the port")
-        print("Press any key to terminate...")
-     #   getch()
-        quit()
+    openPort(portHandler)
 
     # Set port baudrate
     if portHandler.setBaudRate(BAUDRATE):                                            #设置波特率

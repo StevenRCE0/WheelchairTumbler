@@ -1,6 +1,6 @@
 import math
 from lywal_trot import DEVICENAME
-import device
+from device import *
 from dynamixel_sdk import *  # Uses Dynamixel SDK library
 
 # Control table address
@@ -28,7 +28,7 @@ DXL_ID7                      = 7           #Dynamixel ID: 1
 DXL_ID8                      = 8
 # BAUDRATE                    = 57600             # Dynamixel default baudrate : 57600
 BAUDRATE = 115200 # Dynamixel default baudrate : 57600
-DEVICENAME = device.device()
+DEVICENAME = device()
 
 TORQUE_ENABLE = 1  # Value for enabling the torque
 TORQUE_DISABLE = 0  # Value for disabling the torque
@@ -71,7 +71,7 @@ def switch_torque(id_list, switch):
         print("parameters of switch_torque wrong!")
     return
 
-def switch_mode(id_list, mode_name):                                         #模式切换`Q
+def switch_mode(id_list, mode_name):                                         #模式切换
     if mode_name == 'wheel_mode':
         for id in id_list:
             packetHandler.write2ByteTxRx(portHandler, id, ADDR_MX_CW, DXL_WHEEL_MODE_CW_VALUE)
@@ -86,15 +86,7 @@ def switch_mode(id_list, mode_name):                                         #�
 if __name__ == '__main__':
     portHandler = PortHandler(DEVICENAME)
     packetHandler = PacketHandler(PROTOCOL_VERSION)
-
-    # Open port
-    if portHandler.openPort():                                                     #开启端口
-        print("Succeeded to open the port")
-    else:
-        print("Failed to open the port")
-        print("Press any key to terminate...")
-     #   getch()
-        quit()
+    openPort(portHandler)
 
     # Set port baudrate
     if portHandler.setBaudRate(BAUDRATE):                                            #设置波特率
@@ -102,7 +94,7 @@ if __name__ == '__main__':
     else:
         print("Failed to change the baudrate")
         print("Press any key to terminate...")
-     #   getch()
+        getch()
         quit()
 
     id_list = [i for i in range(1,9)]

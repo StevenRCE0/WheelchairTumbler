@@ -1,7 +1,7 @@
 import math
 import numpy as np
 import init
-import device
+from device import *
 
 from dynamixel_sdk import *  # Uses Dynamixel SDK library
 
@@ -24,7 +24,7 @@ PROTOCOL_VERSION            = 1.0  # See which protocol version is used in the D
 
 # BAUDRATE                    = 57600             # Dynamixel default baudrate : 57600
 BAUDRATE = 115200 # Dynamixel default baudrate : 57600
-DEVICENAME = device.device()
+DEVICENAME = device()
 TORQUE_ENABLE = 1  # Value for enabling the torque
 TORQUE_DISABLE = 0  # Value for disabling the torque
 DXL_MINIMUM_POSITION_VALUE = 100  # Dynamixel will rotate between this value
@@ -40,7 +40,9 @@ DXL_WHEEL_MODE_CCW_VALUE = 0
 VELOCITY_MODE = 1
 POSITION_MODE = 3
 #dxl_goal_position = [DXL_MINIMUM_POSITION_VALUE, DXL_MAXIMUM_POSITION_VALUE]  # Goal position
-def switch_torque(id_list, switch):                                                                 #开扭矩
+
+#开扭矩
+def switch_torque(id_list, switch):
     if switch == 'enable':
         for id in id_list:
             dxl_comm_result, dxl_error = packetHandler.write1ByteTxRx(portHandler, id, ADDR_MX_TORQUE_ENABLE,
@@ -110,13 +112,7 @@ if __name__ == '__main__':
     packetHandler = PacketHandler(PROTOCOL_VERSION)
 
     # Open port
-    if portHandler.openPort():                                                     #开启端口
-        print("Succeeded to open the port")
-    else:
-        print("Failed to open the port")
-        print("Press any key to terminate...")
-        getch()
-        quit()
+    openPort(portHandler)
 
     # Set port baudrate
     if portHandler.setBaudRate(BAUDRATE):                                            #设置波特率
