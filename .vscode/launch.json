@@ -5,13 +5,19 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "Python: Current File",
+            "type": "python",
+            "request": "launch",
+            "program": "${file}",
+            "console": "integratedTerminal"
+        },
+        {
             "type": "zshdb",
             "request": "launch",
             "cwd": "${workspaceFolder}/Script Toolbox",
             "name": "Zsh-Debug",
             "program": "./Run.sh",
             "terminalKind": "integrated",
-            
         }
     ]
 }
