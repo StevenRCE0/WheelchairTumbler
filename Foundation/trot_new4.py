@@ -1,6 +1,5 @@
 import math
 def trot_new4(time) :
-#void walktra(double time,int leg_ID)
     T=2
     stepT=T
     steptime =time%stepT
