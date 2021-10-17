@@ -80,3 +80,19 @@ class Lywal:
 
         groupSyncWrite.clearParam()
         return
+
+    def moveBot(self, powerArray:list):
+        def constructPower(power, servoIndex):
+            multiplied = clamp(1024 * power // 100, 0, 1023)
+            if servoIndex == 0:
+                return 1024 + multiplied
+            else: 
+                return multiplied - 1
+        if len(powerArray) != 4:
+            print("expecting 4 groups of servo. ")
+            return
+
+        servoMap = {1:1, 2:2, 3:3, 4:4, 5:5, 6:7, 7:6, 8:8}
+        for groupIndex in range(0, len(powerArray)):
+            self.packetHandler.write2ByteTxRx(self.portHandler, servoMap[groupIndex * 2 + 1], ADDR_MX_MOVING_SPEED, constructPower(powerArray[groupIndex], 0))
+            self.packetHandler.write2ByteTxRx(self.portHandler, servoMap[groupIndex * 2 + 2], ADDR_MX_MOVING_SPEED, constructPower(powerArray[groupIndex], 1))

@@ -1,6 +1,5 @@
 import math
-from lywal_trot import DEVICENAME
-from device import *
+from Foundation.device import *
 from dynamixel_sdk import *  # Uses Dynamixel SDK library
 
 # Control table address
@@ -109,20 +108,20 @@ if __name__ == '__main__':
     # while location[0] == 0 and location[2]==0:
     #     location,a = darknet_video.shibie(pipeline, align, network, class_names, class_colors, args, profile)
     while 1:
-        # c = int(input("Press any key to continue! (or press 0 to quit!)"))
-        # print(c)
-        # if c == 0:
-        #     break
-        # # 1和2控制一条腿
+        c = int(getch())
+        print(c)
+        if c == 0:
+            break
+        # 1和2控制一条腿
         dxl_comm_result, dxl_error = packetHandler.write2ByteTxRx(portHandler,  1,ADDR_MX_MOVING_SPEED, 1124)
         dxl_comm_result, dxl_error = packetHandler.write2ByteTxRx(portHandler,  2,ADDR_MX_MOVING_SPEED, 100)
-        #3和4控制一条腿
+        # 3和4控制一条腿
         dxl_comm_result, dxl_error = packetHandler.write2ByteTxRx(portHandler,  3,ADDR_MX_MOVING_SPEED, 1124)
         dxl_comm_result, dxl_error = packetHandler.write2ByteTxRx(portHandler,  4,ADDR_MX_MOVING_SPEED, 100)
-        #5和7控制一条腿
+        # 5和7控制一条腿
         dxl_comm_result, dxl_error = packetHandler.write2ByteTxRx(portHandler,  5,ADDR_MX_MOVING_SPEED, 100)
         dxl_comm_result, dxl_error = packetHandler.write2ByteTxRx(portHandler,  7,ADDR_MX_MOVING_SPEED, 1124)
-        # #6和8控制一条腿
+        # 6和8控制一条腿
         dxl_comm_result, dxl_error = packetHandler.write2ByteTxRx(portHandler,  6,ADDR_MX_MOVING_SPEED, 100)
         dxl_comm_result, dxl_error = packetHandler.write2ByteTxRx(portHandler,  8,ADDR_MX_MOVING_SPEED, 1124)
         # location,a= darknet_video.shibie(pipeline, align, network, class_names, class_colors, args, profile)

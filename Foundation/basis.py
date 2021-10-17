@@ -35,3 +35,8 @@ DXL_WHEEL_MODE_CCW_VALUE = 0
 VELOCITY_MODE = 1
 POSITION_MODE = 3
 #dxl_goal_position = [DXL_MINIMUM_POSITION_VALUE, DXL_MAXIMUM_POSITION_VALUE]  # Goal position
+
+def clamp(input, min, max):
+    if input > max: return max
+    if input < min: return min
+    return input

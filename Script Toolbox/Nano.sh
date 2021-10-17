@@ -1,5 +1,5 @@
-if [ -e ~/Wheelchair/WheelchairTumbler/main.py ]; then
-    python3 ~/Wheelchair/WheelchairTumbler/main.py
+if [ -e ~/Wheelchair/main.py ]; then
+    echo '123456' | sudo -S python3 ~/Wheelchair/main.py
 else
     echo 'main programme does not exist.'
 fi

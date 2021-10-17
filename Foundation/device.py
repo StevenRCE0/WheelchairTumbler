@@ -3,7 +3,7 @@ import sys
 # Check which port is being used on your controller
 def device():
     if 'darwin' in sys.platform:
-        return '/dev/tty.usbserial-*'
+        return '/dev/tty.usbserial-A105IP0D'
     elif 'nt' in sys.platform:
         return 'COM5'
     else:
@@ -45,15 +45,8 @@ class getch():
         return self.impl
 
     def _GetchUnix(self):
-        import tty, termios
-        fd = sys.stdin.fileno()
-        old_settings = termios.tcgetattr(fd)
-        try:
-            tty.setraw(sys.stdin.fileno())
-            ch = sys.stdin.read(1)
-        finally:
-            termios.tcsetattr(fd, termios.TCSADRAIN, old_settings)
-        return ch
+        import readchar
+        return readchar.readchar()
 
     def _GetchWindows(self):
         import msvcrt
