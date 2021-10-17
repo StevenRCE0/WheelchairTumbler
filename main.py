@@ -11,7 +11,7 @@ powerArray = [2, 2, 2, 2]
 Robot = Lywal(id_list, portHandler, packetHandler)
 Robot.switchTorque('enable')
 Robot.switchMode('wheel_mode')
-Robot.moveBot(powerArray)
+Robot.drive(powerArray)
 time.sleep(5)
 Robot.switchTorque('disable')
 

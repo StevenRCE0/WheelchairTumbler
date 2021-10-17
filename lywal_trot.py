@@ -26,11 +26,11 @@ while 1:
     if getch() == 0:
         break
     N=0
-    NUM = 1000
+    NUM = 1000 # ???
     T=2.0
     desth=init.init(T,detT)
     t0 = time.time()
-    while N<500 and time.time()-t0<20:
+    while N<500 and time.time()-t0<10:
         t= time.time()-t0
         if t>N*detT:
             # id=1,2
@@ -46,15 +46,15 @@ while 1:
             Robot.writeDataToServo(ADDR_MX_GOAL_POSITION, LEN_MX_GOAL_POSITION, 2, Theta[1])
 
             # #2,3
-            # Theta[2]=int(4096/360*30+dxl[2]+desth[2][Index1]*4096/360)
-            # Theta[3] = int(4096 / 360 * 210+dxl[3]-desth[3][Index1] * 4096 / 360)
+            # Theta[2] = int(4096 / 360 * 30  + dxl[2] + desth[2][Index1] * 4096 / 360)
+            # Theta[3] = int(4096 / 360 * 210 + dxl[3] - desth[3][Index1] * 4096 / 360)
             # #4,6
-            # Theta[6] = int(4096 / 360 * 30 + dxl[6] + desth[6][Index1] * 4096 / 360)
+            # Theta[6] = int(4096 / 360 * 30  + dxl[6] + desth[6][Index1] * 4096 / 360)
             # Theta[4] = int(4096 / 360 * 210 + dxl[4] - desth[4][Index1] * 4096 / 360)
 
             #5,7
-            # Theta[5] = int(4096 / 360 *30+ dxl[5] +desth[5][Index1] * 4096 / 360)
-            # Theta[7] = int(4096 / 360 * 210 + dxl[7] -desth[7][Index1] * 4096 / 360)
+            # Theta[5] = int(4096 / 360 * 30  + dxl[5] + desth[5][Index1] * 4096 / 360)
+            # Theta[7] = int(4096 / 360 * 210 + dxl[7] - desth[7][Index1] * 4096 / 360)
 
             # Robot.writeData(ADDR_MX_GOAL_POSITION, LEN_MX_GOAL_POSITION, Theta)
             N = N + 1

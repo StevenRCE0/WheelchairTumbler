@@ -9,7 +9,7 @@ def init(T,detT):
     Desth2= [];Desth3=[];Desth4=[];Desth5=[];Desth6=[];Desth7=[];Desth8=[]
     [x1, y1] = trot_new4.trot_new4(0)                      # 电机12左前腿
     [x2, y2] = trot_new4.trot_new4(T / 2)                   #电机3，4右前腿
-    [x3, y3] =trot_new3.trot_new3(T/2)                        # 电机6，8右后腿
+    [x3, y3] =trot_new3.trot_new3(T / 2)                        # 电机6，8右后腿
     [x4, y4] = trot_new2.trot_new2(0)                 # 电机5，7左后腿
     desth1, desth2 = nijie.nijie(x1, y1)
     desth3, desth4= nijie.nijie(x2, y2)

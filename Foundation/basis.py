@@ -42,3 +42,7 @@ def clamp(input, min, max):
     if input > max: return max
     if input < min: return min
     return input
+
+def degToPositionalCode(degree) -> int:
+    ratio = 4096 / 360
+    return int(degree * ratio)
