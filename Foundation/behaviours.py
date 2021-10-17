@@ -134,7 +134,7 @@ class Lywal:
                 currentStartTime = time.time() - startTime
                 if currentStartTime > runCount * detT:
                     # Debugging for servo #1 & #2
-                    detIndex = int(math.floor((runCount) % (T / detT)))
+                    destIndex = int(math.floor((runCount) % (T / detT)))
                     if destIndex == 40:
                         destIndex = 0
                     
