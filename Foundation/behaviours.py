@@ -1,4 +1,3 @@
-from _typeshed import Self
 import math
 import numpy as np
 import Foundation.init as init
@@ -6,8 +5,6 @@ from Foundation.device import *
 from Foundation.basis import *
 
 from dynamixel_sdk import *
-
-from Foundation.lywal_trot import Index1  # Uses Dynamixel SDK library
 
 class Lywal:
 
