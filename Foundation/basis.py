@@ -43,6 +43,9 @@ def clamp(input, min, max):
     if input < min: return min
     return input
 
-def degToPositionalCode(degree) -> int:
+def degToPositionalCode(degree, *clampRange) -> int:
     ratio = 4096 / 360
-    return int(degree * ratio)
+    if len(clampRange) == 2:
+        return int(clamp(ratio * degree, clampRange[0], clampRange[1]))
+    else:
+        return int(ratio * degree)
