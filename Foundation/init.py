@@ -1,30 +1,35 @@
 from Foundation.nijie import nijie
-import Foundation.trot_new2 as trot_new2
-import Foundation.trot_new3 as trot_new3
-import Foundation.trot_new4 as trot_new4
-import matplotlib.pyplot as plt
+from Foundation.trotTrail import trotTrail
+# import matplotlib.pyplot as plt
 
-def init(T,detT):
+def init(T, detT):
 
     def emptyDesthArrays() -> tuple:
         return ([], [], [], [], [], [], [], [])
 
     Desth1, Desth2, Desth3, Desth4, Desth5, Desth6, Desth7, Desth8 = emptyDesthArrays()
+    paramDict = {
+        'T': 2,
+        'stepH': 15,
+        'stepV': 3,     # Step span
+        'steph': 4,
+        'C': 1
+    }
     
-    [x1, y1] = trot_new4.trot_new4(0)                      # 电机12左前腿
-    [x2, y2] = trot_new4.trot_new4(T / 2)                   #电机3，4右前腿
-    [x3, y3] =trot_new3.trot_new3(T / 2)                        # 电机6，8右后腿
-    [x4, y4] = trot_new2.trot_new2(0)                 # 电机5，7左后腿
+    [x1, y1] = trotTrail(0    , paramDict, 4)            # 电机12左前腿
+    [x2, y2] = trotTrail(T / 2, paramDict, 4)            # 电机34右前腿
+    [x3, y3] = trotTrail(T / 2, paramDict, 3)            # 电机68右后腿
+    [x4, y4] = trotTrail(0    , paramDict, 2)            # 电机57左后腿
 
     desth1, desth2 = nijie(x1, y1)
-    desth3, desth4= nijie(x2, y2)
+    desth3, desth4 = nijie(x2, y2)
     desth6, desth8 = nijie(x3, y3)
-    desth7, desth5= nijie(x4, y4)
+    desth7, desth5 = nijie(x4, y4)
 
     Desth1.append(desth1);Desth2.append(desth2);Desth3.append(desth3);Desth4.append(desth4)
-    Desth5.append(desth5);Desth6.append(desth6);Desth7.append(desth7),Desth8.append(desth8)
+    Desth5.append(desth5);Desth6.append(desth6);Desth7.append(desth7);Desth8.append(desth8)
 
-    for dest in range(int(detT*100),int(T*100),int(detT*100)):
+    for dest in range(int(detT * 100),int(T * 100),int(detT * 100)):
         dest=dest/100
         [x1, y1] = trot_new4.trot_new4(dest)
         [x2, y2] = trot_new4.trot_new4(dest + T / 2)
@@ -48,4 +53,4 @@ def init(T,detT):
         Desth7.append(theta7_a)
         Desth8.append(theta8_a)
 
-    return[Desth1,Desth2,Desth3,Desth4,Desth5,Desth6,Desth7,Desth8]
+    return [Desth1, Desth2, Desth3, Desth4, Desth5, Desth6, Desth7, Desth8]

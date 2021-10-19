@@ -7,12 +7,14 @@ openPort(portHandler)
 setBaudRate(portHandler, BAUDRATE)
 
 id_list = [i for i in range(1, 9)]
-powerArray = [2, 2, 2, 2]
 Robot = Lywal(id_list, portHandler, packetHandler)
 Robot.switchTorque('enable')
 Robot.switchMode('wheel_mode')
-Robot.drive(powerArray)
+Robot.drive([2, 2, 2, 2])
 time.sleep(5)
+Robot.drive([0, 0, 0, 0])
+Robot.switchMode('trot_mode')
+Robot.trot(1)
 Robot.switchTorque('disable')
 
 closePort(portHandler)
