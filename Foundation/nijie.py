@@ -1,7 +1,7 @@
 import math
 import Foundation.zhengjie as zhengjie
 
-def nijie(x,y):
+def nijie(x,y) -> list:
     r=9.0
     a=9.0
     rtheta1 = 361
