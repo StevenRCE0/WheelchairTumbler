@@ -132,5 +132,5 @@ dmypy.json
 .DS_Store
 
 # Workspaces
-workspace.code-workspace
+*.code-workspace
 .vscode/
