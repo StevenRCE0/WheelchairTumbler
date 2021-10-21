@@ -205,7 +205,7 @@ class Lywal:
         # id = [1,2]
         dxl = self.readPersentPosition()
         # Theta1 = [1,2]
-        for i in enumerate(Theta1.items())
+        for i in enumerate(Theta1.items()):
             Theta1[i] = int(4096 / 360 * 15+ dxl[i])
 
         self.writeData(id, ADDR_MX_GOAL_POSITION, LEN_MX_GOAL_POSITION, Theta1)
@@ -227,10 +227,10 @@ class Lywal:
         dxl = self.readPersentPosition(id)
         for i in range(len(Theta1)):
             Theta1[i] = int(-4096 / 360 * 6+ dxl[i])
-        write_data(id, ADDR_MX_GOAL_POSITION, LEN_MX_GOAL_POSITION, Theta1)
+        self.writeData(id, ADDR_MX_GOAL_POSITION, LEN_MX_GOAL_POSITION, Theta1)
         x=0
         time.sleep(1)                                   #向后转
-        dxl = readpersentposition(id_list)
+        dxl = self.readPersentPosition()
         t0 = time()
         while x<240:
             t = time() - t0
@@ -240,4 +240,4 @@ class Lywal:
                 for i in [1,3,4,5]:#[1,3,4,5]:
                     Theta[i] = int(dxl[i] -4096 / 360 *1* x)
                 x = x + 1
-                write_data(id_list, ADDR_MX_GOAL_POSITION, LEN_MX_GOAL_POSITION, Theta)
+                self.writeData(self.id_list, ADDR_MX_GOAL_POSITION, LEN_MX_GOAL_POSITION, Theta)
