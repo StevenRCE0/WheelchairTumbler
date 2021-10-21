@@ -30,9 +30,9 @@ def init(T, detT):
     Desth5.append(desth5);Desth6.append(desth6);Desth7.append(desth7);Desth8.append(desth8)
 
     for dest in range(int(detT * 100),int(T * 100),int(detT * 100)):
-        dest=dest/100
-        [x1, y1] = trot_new4.trot_new4(dest)
-        [x2, y2] = trot_new4.trot_new4(dest + T / 2)
+        dest = dest/100
+        [x1, y1] = trotTrail(dest, paramDict, 4)
+        [x2, y2] = trotTrail(dest + T / 2, paramDict, 4)
         [theta1_a, theta2_a] =  nijie(x1, y1)
         [theta3_a, theta4_a] =  nijie(x2, y2)
 
@@ -43,8 +43,8 @@ def init(T, detT):
 
     for dest in range(int(T * 100 - detT * 100), 0, int(-detT * 100)):
         dest = dest / 100
-        [x3, y3] = trot_new3.trot_new3(dest+T/2)
-        [x4, y4] = trot_new2.trot_new2(dest)
+        [x3, y3] = trotTrail(dest+T/2, paramDict, 3)
+        [x4, y4] = trotTrail(dest, paramDict, 2)
         [theta6_a, theta8_a] = nijie(x3, y3)
         [theta7_a, theta5_a] = nijie(x4, y4)
         

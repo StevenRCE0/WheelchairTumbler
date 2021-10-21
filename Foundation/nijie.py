@@ -84,6 +84,6 @@ def nijie(x,y) -> list:
     if rtheta1>360 or rtheta2>360:
         rtheta1=None
         rtheta2=None
-        print("can't reach")
+        raise ArithmeticError("Can't reach")
     #print(rtheta1, rtheta2)
     return [rtheta1,rtheta2]
