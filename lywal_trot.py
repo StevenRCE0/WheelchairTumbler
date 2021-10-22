@@ -40,10 +40,10 @@ while 1:
                 Index1=0
             
             Theta[0]=int(4096/360*30+dxl[0]+desth[0][Index1]*4096/360)
-            Robot.writeDataToServo(ADDR_MX_GOAL_POSITION, LEN_MX_GOAL_POSITION, 1, Theta[0])
+            Robot.writeData(ADDR_MX_GOAL_POSITION, LEN_MX_GOAL_POSITION, 1, Theta[0])
 
             Theta[1]=int(4096/360*210+dxl[1]-desth[1][Index1]*4096/360)
-            Robot.writeDataToServo(ADDR_MX_GOAL_POSITION, LEN_MX_GOAL_POSITION, 2, Theta[1])
+            Robot.writeData(ADDR_MX_GOAL_POSITION, LEN_MX_GOAL_POSITION, 2, Theta[1])
 
             # #2,3
             # Theta[2] = int(4096 / 360 * 30  + dxl[2] + desth[2][Index1] * 4096 / 360)

@@ -11,6 +11,7 @@ from dynamixel_sdk import *
 class Lywal:
 
     mode = 'wheel_mode'
+    jointSpeed = 100
 
     def __init__(self, id_list: list, portHandler, packetHandler):
         self.id_list = id_list
@@ -38,6 +39,21 @@ class Lywal:
         else:
             print("parameters of switch_torque wrong!")
         return
+
+    def setSpeed(self, powerPairs: dict):
+        if self.mode == 'wheel_mode':
+            print('In wheel mode, there\'s no need for setSpeed function. ')
+            return
+
+        targetDict = {}
+        for index, (key, value) in enumerate(powerPairs.items()):
+            if value == 100:
+                targetDict[key] = 0
+                continue
+            targetValue = int(clamp(409.6 * value, 1, 1023))
+            targetDict[key] = targetValue
+
+        self.writeData(ADDR_MX_MOVING_SPEED, LEN_MX_MOVING_SPEED, targetDict)
 
     def switchMode(self, mode_name: str):
         if mode_name == 'wheel_mode':
@@ -78,7 +94,7 @@ class Lywal:
             dxl.append(dxl1_present_position)
         return dxl
 
-    def writeData(self, adr, adr_len, data):
+    def writeDataAll(self, adr, adr_len, data):
         groupSyncWrite = GroupSyncWrite(self.portHandler, self.packetHandler, adr, adr_len)
         param_goal_positions = []
 
@@ -96,18 +112,18 @@ class Lywal:
 
         groupSyncWrite.clearParam()
     
-    def writeDataToServo(self, adr, adr_len, servoID: int, position: int):
+    def writeData(self, adr, adr_len, dataPairs: dict):
         groupSyncWrite = GroupSyncWrite(self.portHandler, self.packetHandler, adr, adr_len)
-        param_goal_position = [
-            DXL_LOBYTE(DXL_LOWORD(position)),
-            DXL_HIBYTE(DXL_LOWORD(position)),
-            DXL_LOBYTE(DXL_HIWORD(position)),
-            DXL_HIBYTE(DXL_HIWORD(position))
-        ]
-        dxl_addparam_result = groupSyncWrite.addParam(servoID, param_goal_position)
-        if dxl_addparam_result != True:
-            print("[ID:%03d] groupSyncWrite addparam failed" % servoID)
-            quit()
+        for index, (key, value) in enumerate(dataPairs.items()):
+            target = [
+                DXL_LOBYTE(DXL_LOWORD(value)), DXL_HIBYTE(DXL_LOWORD(value)),
+                DXL_LOBYTE(DXL_HIWORD(value)), DXL_HIBYTE(DXL_HIWORD(value))
+            ]
+            dxl_addparam_result = groupSyncWrite.addParam(key, target)
+            if dxl_addparam_result != True:
+                print("[Index:%03d, ID:%03d] groupSyncWrite addparam failed" % index % key)
+                quit()
+
         dxl_comm_result = groupSyncWrite.txPacket()
         if dxl_comm_result != COMM_SUCCESS:
             print("%s" % self.packetHandler.getTxRxResult(dxl_comm_result))
@@ -116,12 +132,13 @@ class Lywal:
         
     def rotateJoints(self, anglePairs: dict):
         currentPositions = self.readPersentPosition()
+        targetDict = {}
         for index, (key, value) in enumerate(anglePairs.items()):
-            self.writeDataToServo(ADDR_MX_GOAL_POSITION, LEN_MX_GOAL_POSITION, int(key), fancyRotate(currentPositions[index], degToPositionalCode(int(value)), directionMap[key]))
+            targetDict[int(key)] = fancyRotate(currentPositions[index], degToPositionalCode(int(value)), directionMap[key])
             print("target: " + str(degToPositionalCode(int(value))))
             print("current: " + str(currentPositions[index]))
             print("fancy: " + str(fancyRotate(currentPositions[index], degToPositionalCode(int(value)), directionMap[key])))
-            
+        self.writeData(ADDR_MX_GOAL_POSITION, LEN_MX_GOAL_POSITION, targetDict)
 
     def drive(self, powerArray: list):
         def constructPower(power, servoIndex):
@@ -180,7 +197,7 @@ class Lywal:
                         degToPositionalCode(-desth[7][destIndex] + 210) + dxl[7]
                     ]
 
-                    self.writeData(ADDR_MX_GOAL_POSITION, LEN_MX_GOAL_POSITION, destList)
+                    self.writeDataAll(ADDR_MX_GOAL_POSITION, LEN_MX_GOAL_POSITION, destList)
                     runCount += 1
 
     def claw(self):
@@ -200,7 +217,7 @@ class Lywal:
                 for i in [1,3,4,5]:
                     Theta[i] = int(dxl[i] + 4096 / 360 *1*x)
                 x = x + 1
-                self.writeData(self.id_list, ADDR_MX_GOAL_POSITION, LEN_MX_GOAL_POSITION, Theta)
+                self.writeDataAll(self.id_list, ADDR_MX_GOAL_POSITION, LEN_MX_GOAL_POSITION, Theta)
         time.sleep(1)                         #前轮张开一定角度
         # id = [1,2]
         dxl = self.readPersentPosition()
@@ -208,7 +225,7 @@ class Lywal:
         for i in enumerate(Theta1.items()):
             Theta1[i] = int(4096 / 360 * 15+ dxl[i])
 
-        self.writeData(id, ADDR_MX_GOAL_POSITION, LEN_MX_GOAL_POSITION, Theta1)
+        self.writeDataAll(id, ADDR_MX_GOAL_POSITION, LEN_MX_GOAL_POSITION, Theta1)
         time.sleep(1)                            #向前滚一定角度
         t0 = time()
         x = 0
@@ -221,13 +238,13 @@ class Lywal:
                 for i in [1,3,4,5]:#[1,3,4,5]:
                     Theta[i] = int(dxl[i] +4096 / 360 *1*x)
                 x = x + 1
-                self.writeData(self.id_list, ADDR_MX_GOAL_POSITION, LEN_MX_GOAL_POSITION, Theta)
+                self.writeDataAll(self.id_list, ADDR_MX_GOAL_POSITION, LEN_MX_GOAL_POSITION, Theta)
         dxl = self.readPersentPosition(id)
         time.sleep(1)                                   #前轮夹起棍子
         dxl = self.readPersentPosition(id)
         for i in range(len(Theta1)):
             Theta1[i] = int(-4096 / 360 * 6+ dxl[i])
-        self.writeData(id, ADDR_MX_GOAL_POSITION, LEN_MX_GOAL_POSITION, Theta1)
+        self.writeDataAll(id, ADDR_MX_GOAL_POSITION, LEN_MX_GOAL_POSITION, Theta1)
         x=0
         time.sleep(1)                                   #向后转
         dxl = self.readPersentPosition()
@@ -240,4 +257,4 @@ class Lywal:
                 for i in [1,3,4,5]:#[1,3,4,5]:
                     Theta[i] = int(dxl[i] -4096 / 360 *1* x)
                 x = x + 1
-                self.writeData(self.id_list, ADDR_MX_GOAL_POSITION, LEN_MX_GOAL_POSITION, Theta)
+                self.writeDataAll(self.id_list, ADDR_MX_GOAL_POSITION, LEN_MX_GOAL_POSITION, Theta)
