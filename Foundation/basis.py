@@ -26,7 +26,6 @@ TORQUE_DISABLE = 0  # Value for disabling the torque
 DXL_MINIMUM_POSITION_VALUE = 100  # Dynamixel will rotate between this value
 DXL_MAXIMUM_POSITION_VALUE = 900  # and this value (note that the Dynamixel would not move when the position value is out of movable range. Check e-manual about the range of the Dynamixel you use.)
 DXL_MOVING_STATUS_THRESHOLD = 10  # Dynamixel moving status threshold
-# DXL_MOVING_STATUS_THRESHOLD = 1  # Dynamixel moving status threshold
 
 # mode
 DXL_MULTI_MODE_CW_VALUE = 4095
@@ -40,7 +39,6 @@ POSITION_MODE = 3
 #dxl_goal_position = [DXL_MINIMUM_POSITION_VALUE, DXL_MAXIMUM_POSITION_VALUE]  # Goal position
 
 servoMap = {1:1, 2:2, 3:3, 4:4, 5:5, 6:7, 7:6, 8:8}
-directionMap = {1: 'CCW', 2: 'CW'}
 
 def clamp(input, min, max):
     if input > max: return max
@@ -54,15 +52,5 @@ def degToPositionalCode(degree, *clampRange) -> int:
     else:
         return int(ratio * degree)
 
-def fancyRotate(current: int, target: int, direction: str) -> int:
-    jointCurrent = current % 4096
-    jointTarget = target
-
-    if direction == 'CW':
-        print("\n\nCW\n\n")
-        jointTarget = current + target - jointCurrent
-    elif direction == 'CCW':
-        print("\n\nCCW")
-        print("jc: " + str(jointCurrent))
-        jointTarget = current + (target -  jointCurrent)
-    return int(jointTarget)
+def fancyRotate(current: int, target: int) -> int:
+    return current + target

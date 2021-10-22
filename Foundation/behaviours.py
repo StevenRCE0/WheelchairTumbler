@@ -1,6 +1,6 @@
 import math
 import numpy as np
-from time import time, sleep
+import time
 import Foundation.init as init
 from Foundation.device import *
 from Foundation.basis import *
@@ -12,11 +12,14 @@ class Lywal:
 
     mode = 'wheel_mode'
     jointSpeed = 100
+    initialPositions = []
+    positionZero = []
 
     def __init__(self, id_list: list, portHandler, packetHandler):
         self.id_list = id_list
         self.portHandler = portHandler
         self.packetHandler = packetHandler
+        self.initialPositions: list = self.readPersentPosition()
 
     def switchTorque(self, switch: str):
         if switch == 'enable':
@@ -27,7 +30,7 @@ class Lywal:
                 elif dxl_error != 0:
                     print("%s" % self.packetHandler.getRxPacketError(dxl_error))
                 else:
-                    print("Dynamixel#%d has been successfully connected" % id)
+                    print("Dynamixel#" + str(id) + " has been successfully connected")
         elif switch == 'disable':
             for id in self.id_list:
                 dxl_comm_result, dxl_error = self.packetHandler.write1ByteTxRx(self.portHandler, id, ADDR_MX_TORQUE_ENABLE,
@@ -52,7 +55,7 @@ class Lywal:
                 continue
             targetValue = int(clamp(409.6 * value, 1, 1023))
             targetDict[key] = targetValue
-
+        print(targetDict)
         self.writeData(ADDR_MX_MOVING_SPEED, LEN_MX_MOVING_SPEED, targetDict)
 
     def switchMode(self, mode_name: str):
@@ -99,7 +102,10 @@ class Lywal:
         param_goal_positions = []
 
         for i in range(len(self.id_list)):
-            param_goal_positions.append([DXL_LOBYTE(DXL_LOWORD(data[i])),DXL_HIBYTE(DXL_LOWORD(data[i])),DXL_LOBYTE(DXL_HIWORD(data[i])),DXL_HIBYTE(DXL_HIWORD(data[i]))])
+            param_goal_positions.append([
+                DXL_LOBYTE(DXL_LOWORD(data[i])),DXL_HIBYTE(DXL_LOWORD(data[i])),
+                DXL_LOBYTE(DXL_HIWORD(data[i])),DXL_HIBYTE(DXL_HIWORD(data[i]))
+            ])
 
         for i in range(len(self.id_list)):
             dxl_addparam_result = groupSyncWrite.addParam(self.id_list[i],param_goal_positions[i])
@@ -121,7 +127,9 @@ class Lywal:
             ]
             dxl_addparam_result = groupSyncWrite.addParam(key, target)
             if dxl_addparam_result != True:
-                print("[Index:%03d, ID:%03d] groupSyncWrite addparam failed" % index % key)
+                print(dxl_addparam_result)
+                print("[Index:" + str(index) + ", ID:" + str(key) + "] groupSyncWrite addparam failed")
+                self.switchTorque('disable')
                 quit()
 
         dxl_comm_result = groupSyncWrite.txPacket()
@@ -131,13 +139,16 @@ class Lywal:
         groupSyncWrite.clearParam()
         
     def rotateJoints(self, anglePairs: dict):
-        currentPositions = self.readPersentPosition()
         targetDict = {}
+        initialState: list = self.readPersentPosition()
+        print("\n")
+        print(initialState)
+        print("\n")
         for index, (key, value) in enumerate(anglePairs.items()):
-            targetDict[int(key)] = fancyRotate(currentPositions[index], degToPositionalCode(int(value)), directionMap[key])
+            targetDict[int(key)] = fancyRotate(initialState[key-1], degToPositionalCode(int(value)))
             print("target: " + str(degToPositionalCode(int(value))))
-            print("current: " + str(currentPositions[index]))
-            print("fancy: " + str(fancyRotate(currentPositions[index], degToPositionalCode(int(value)), directionMap[key])))
+            print("current: " + str(initialState[key-1]))
+            print("fancy: " + str(fancyRotate(initialState[key-1], degToPositionalCode(int(value)))))
         self.writeData(ADDR_MX_GOAL_POSITION, LEN_MX_GOAL_POSITION, targetDict)
 
     def drive(self, powerArray: list):
@@ -157,7 +168,7 @@ class Lywal:
 
         rectifiedPowerArray = [
             powerArray[0], powerArray[1],
-            -powerArray[3], -powerArray[4]
+            -powerArray[2], -powerArray[3]
         ]
 
         for groupIndex in range(0, len(powerArray)):
@@ -175,12 +186,12 @@ class Lywal:
         for occurrence in range(repetitiveSet):
             runCount, desiredCount = 0, 500
             T, deltaT = 2.0, 0.2
-            startTime  = time()
+            startTime  = time.time()
             desth = init.init(T, deltaT)
             dxl = self.readPersentPosition()
 
-            while runCount < desiredCount and time() - startTime < 10:
-                currentStartTime = time() - startTime
+            while runCount < desiredCount and time.time() - startTime < 10:
+                currentStartTime = time.time() - startTime
                 if currentStartTime > runCount * deltaT:
                     destIndex = int(math.floor((runCount) % (T / deltaT)))
                     if destIndex == 40:
@@ -206,11 +217,11 @@ class Lywal:
         Theta1 = [1,2,3,4]
         detT, x = 0.05, 0
 
-        t0 = time()                             #向前滚
+        t0 = time.time()                             #向前滚
         dxl = self.readPersentPosition()
 
         while x < 121:
-            t = time() - t0
+            t = time.time() - t0
             if t > x * detT:
                 for i in [0,2,6,7]:
                     Theta[i] = int(dxl[i] - 4096 / 360 *1*x)
@@ -227,11 +238,11 @@ class Lywal:
 
         self.writeDataAll(id, ADDR_MX_GOAL_POSITION, LEN_MX_GOAL_POSITION, Theta1)
         time.sleep(1)                            #向前滚一定角度
-        t0 = time()
+        t0 = time.time()
         x = 0
         dxl = self.readPersentPosition()
         while x<60:
-            t = time() - t0
+            t = time.time() - t0
             if t> x *detT:
                 for i in [0,2,6,7]:#[0,2,6,7]:
                     Theta[i] = int(dxl[i] -4096 / 360 *1*x)
@@ -248,9 +259,9 @@ class Lywal:
         x=0
         time.sleep(1)                                   #向后转
         dxl = self.readPersentPosition()
-        t0 = time()
+        t0 = time.time()
         while x<240:
-            t = time() - t0
+            t = time.time() - t0
             if t> x *detT:
                 for i in [0,2,6,7]:#[0,2,6,7]:
                     Theta[i] = int(dxl[i] +4096 / 360 *1* x)
