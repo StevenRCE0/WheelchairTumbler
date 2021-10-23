@@ -59,19 +59,23 @@ class Lywal:
         print(targetDict)
         self.writeData(ADDR_MX_MOVING_SPEED, LEN_MX_MOVING_SPEED, targetDict)
 
-    def switchMode(self, mode_name: str):
+    def switchMode(self, mode_name: str, *servoParam: list):
+        servoArray = self.id_list
+        if len(servoParam) != 0:
+            servoArray = servoParam
+    
         if mode_name == 'wheel_mode':
-            for id in self.id_list:
+            for id in servoArray:
                 self.packetHandler.write2ByteTxRx(self.portHandler, id, ADDR_MX_CW, DXL_WHEEL_MODE_CW_VALUE)
                 self.packetHandler.write2ByteTxRx(self.portHandler,id, ADDR_MX_CCW, DXL_WHEEL_MODE_CCW_VALUE)
                 self.packetHandler.write2ByteTxRx(self.portHandler, id, ADDR_MX_OFFSET, 6000)
         elif mode_name == 'multi_mode':
-            for id in self.id_list:
+            for id in servoArray:
                 self.packetHandler.write2ByteTxRx(self.portHandler, id, ADDR_MX_CW, DXL_MULTI_MODE_CW_VALUE)
                 self.packetHandler.write2ByteTxRx(self.portHandler, id, ADDR_MX_CCW, DXL_MULTI_MODE_CCW_VALUE)
                 self.packetHandler.write2ByteTxRx(self.portHandler,id, ADDR_MX_OFFSET, 6000)
         elif mode_name == 'joint_mode':
-            for id in self.id_list:
+            for id in servoArray:
                 self.packetHandler.write2ByteTxRx(self.portHandler, id, ADDR_MX_CW, DXL_JOINT_MODE_CW_VALUE)
                 self.packetHandler.write2ByteTxRx(self.portHandler, id, ADDR_MX_CCW, DXL_JOINT_MODE_CCW_VALUE)
                 self.packetHandler.write2ByteTxRx(self.portHandler,id, ADDR_MX_OFFSET, 6000)
@@ -184,17 +188,25 @@ class Lywal:
             -powerArray[2], -powerArray[3]
         ]
 
-        for groupIndex in range(0, len(powerArray)):
-            self.packetHandler.write2ByteTxRx(self.portHandler, servoMap[groupIndex * 2 + 1], ADDR_MX_MOVING_SPEED, constructPower(powerArray[groupIndex], 0))
-            self.packetHandler.write2ByteTxRx(self.portHandler, servoMap[groupIndex * 2 + 2], ADDR_MX_MOVING_SPEED, constructPower(powerArray[groupIndex], 1))
+        for groupIndex, power in enumerate(rectifiedPowerArray):
+            if power == 0:
+                continue
+            self.packetHandler.write2ByteTxRx(self.portHandler, servoMap[groupIndex * 2 + 1], ADDR_MX_MOVING_SPEED, constructPower(power, 0))
+            self.packetHandler.write2ByteTxRx(self.portHandler, servoMap[groupIndex * 2 + 2], ADDR_MX_MOVING_SPEED, constructPower(power, 1))
 
-    def trot(self, *repetitive: int):
+# Parameter dictionary contains "repetitive: int" and "servos: list". 
+    def trot(self, **paramOptions: dict):
         repetitiveSet: int = 0
-        if len(repetitive) == 0 or repetitive[0] <= 0:
+        if 'repetitive' not in paramOptions or paramOptions-'repetitive' <= 0:
             repetitiveSet = 1
         else:
-            repetitiveSet = repetitive[0]
-        destList = []
+            repetitiveSet = paramOptions['repetitive']
+        
+        targetServos: list = self.id_list
+        if 'servos' in paramOptions and len(paramOptions['servos']) in range(1, 8):
+            targetServos = paramOptions['servos']
+        
+        destList = []        
 
         for occurrence in range(repetitiveSet):
             runCount, desiredCount = 0, 500
@@ -221,7 +233,12 @@ class Lywal:
                         degToPositionalCode(-desth[7][destIndex] + 210) + dxl[7]
                     ]
 
-                    self.writeDataAll(ADDR_MX_GOAL_POSITION, LEN_MX_GOAL_POSITION, destList)
+                    targetDict = {}
+                    for index, servo in enumerate(targetServos):
+                        targetDict[servo] = destList[index]
+                    self.writeData(ADDR_MX_GOAL_POSITION, LEN_MX_GOAL_POSITION, targetDict)
+                    #  self.writeDataAll(ADDR_MX_GOAL_POSITION, LEN_MX_GOAL_POSITION, destList)
+
                     runCount += 1
 
     def claw(self):

@@ -61,3 +61,10 @@ def degToPositionalCode(degree, *clampRange) -> int:
 def fancyRotate(current: int, target: int) -> int:
     return current + target
     
+# TODO: test it out! 
+def solveRotationConflict(angleDict: dict) -> dict:
+    resultDict = angleDict.copy()
+    for index, (logicalID, servoID) in enumerate(servoMap):
+        if logicalID % 2 == 0 and angleDict[logicalID] > angleDict[logicalID - 1]:
+            resultDict[logicalID] -= 4096
+    return resultDict
