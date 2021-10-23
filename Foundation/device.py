@@ -46,8 +46,13 @@ class getch():
 
     def _GetchUnix(self):
         import readchar
-        return readchar.readchar()
+        try:
+            return readchar.readchar()
+        except:
+            print("Not in interactive mode, continuing... ")
+            return 'c'
 
     def _GetchWindows(self):
         import msvcrt
         return msvcrt.getch()
+        

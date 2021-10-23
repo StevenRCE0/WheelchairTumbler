@@ -40,6 +40,12 @@ POSITION_MODE = 3
 
 servoMap = {1:1, 2:2, 3:3, 4:4, 5:5, 6:7, 7:6, 8:8}
 
+def initializeRotationDict() -> dict:
+    result = {}
+    for index in range(8):
+        result[index + 1] = -82
+    return result
+
 def clamp(input, min, max):
     if input > max: return max
     if input < min: return min
@@ -54,3 +60,4 @@ def degToPositionalCode(degree, *clampRange) -> int:
 
 def fancyRotate(current: int, target: int) -> int:
     return current + target
+    

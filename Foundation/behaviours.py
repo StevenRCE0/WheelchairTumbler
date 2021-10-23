@@ -43,6 +43,7 @@ class Lywal:
             print("parameters of switch_torque wrong!")
         return
 
+# TODO: make this work
     def setSpeed(self, powerPairs: dict):
         if self.mode == 'wheel_mode':
             print('In wheel mode, there\'s no need for setSpeed function. ')
@@ -137,7 +138,7 @@ class Lywal:
             print("%s" % self.packetHandler.getTxRxResult(dxl_comm_result))
 
         groupSyncWrite.clearParam()
-        
+
     def rotateJoints(self, anglePairs: dict):
         targetDict = {}
         initialState: list = self.readPersentPosition()
@@ -149,6 +150,18 @@ class Lywal:
             print("target: " + str(degToPositionalCode(int(value))))
             print("current: " + str(initialState[key-1]))
             print("fancy: " + str(fancyRotate(initialState[key-1], degToPositionalCode(int(value)))))
+        self.writeData(ADDR_MX_GOAL_POSITION, LEN_MX_GOAL_POSITION, targetDict)
+
+# TODO: not tested yet
+    def rotateToZero(self):
+        if len(self.positionZero) !=  8:
+            print('Position zero has not been set. ')
+            self.switchTorque('disable')
+            quit(1)
+        targetDict = {}
+        for index, value in enumerate(self.readPersentPosition()):
+            offest = value // 4096 - self.positionZero[index] // 4096
+            targetDict[index + 1] = offest
         self.writeData(ADDR_MX_GOAL_POSITION, LEN_MX_GOAL_POSITION, targetDict)
 
     def drive(self, powerArray: list):

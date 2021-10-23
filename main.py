@@ -23,9 +23,8 @@ print(Robot.initialPositions)
 # print(speedDict)
 # Robot.setSpeed(speedDict)
 
-Robot.rotateJoints({1: -80, 2: -80, 3: -80, 4: -80, 5: -80, 7: -80, 6: -80, 8: -80})
+Robot.rotateJoints(initializeRotationDict())
 sleep(1)
-# Robot.setSpeed(speedDict)
 Robot.positionZero = Robot.readPersentPosition()
 Robot.trot(1)
 
