@@ -10,8 +10,10 @@ from dynamixel_sdk import *
 
 class Lywal:
 
+    # Robot basic parameters
     mode = 'wheel_mode'
     jointSpeed = 100
+    deltaT = 0.05
     initialPositions = []
     positionZero = []
 
@@ -21,27 +23,33 @@ class Lywal:
         self.packetHandler = packetHandler
         self.initialPositions: list = self.readPersentPosition()
 
-    def switchTorque(self, switch: str):
+    def switchTorque(self, switch: str, *servoArray: list):
+        targetServos = self.id_list
+        if len(servoArray) != 0:
+            targetServos = servoArray[0]
         if switch == 'enable':
-            for id in self.id_list:
+            for id in targetServos:
                 dxl_comm_result, dxl_error = self.packetHandler.write1ByteTxRx(self.portHandler, id, ADDR_MX_TORQUE_ENABLE, 1)
                 if dxl_comm_result != COMM_SUCCESS:
                     print("%s" % self.packetHandler.getTxRxResult(dxl_comm_result))
                 elif dxl_error != 0:
                     print("%s" % self.packetHandler.getRxPacketError(dxl_error))
-        elif switch == 'disable':
-            for id in self.id_list:
+        elif switch == 'disable' or 'quit':
+            for id in targetServos:
                 dxl_comm_result, dxl_error = self.packetHandler.write1ByteTxRx(self.portHandler, id, ADDR_MX_TORQUE_ENABLE,
                                                                         TORQUE_DISABLE)
                 if dxl_comm_result != COMM_SUCCESS:
                     print("%s" % self.packetHandler.getTxRxResult(dxl_comm_result))
                 elif dxl_error != 0:
                     print("%s" % self.packetHandler.getRxPacketError(dxl_error))
+            if switch == 'quit':
+                quit(1)
         else:
-            print("parameters of switch_torque wrong!")
+            print("Insufficient parameters of switch_torque! ")
+            self.switchTorque('quit')
         return
 
-# TODO: make this work
+    # TODO: make this work
     def setSpeed(self, powerPairs: dict):
         if self.mode == 'wheel_mode':
             print('In wheel mode, there\'s no need for setSpeed function. ')
@@ -83,12 +91,11 @@ class Lywal:
         self.mode = mode_name
 
     def readPersentPosition(self, *targetServo: list) -> list:
-        dxl=[]
+        dxl = []
         targetArray = self.id_list
         if len(targetServo) > 0:
             targetArray = targetServo
         for id in targetArray:
-            # Read Dynamixel present position
             dxl1_present_position, dxl_comm_result, dxl_error = self.packetHandler.read4ByteTxRx(
                 self.portHandler, id, ADDR_MX_PRESENT_POSITION
             )
@@ -113,7 +120,7 @@ class Lywal:
             dxl_addparam_result = groupSyncWrite.addParam(self.id_list[i],param_goal_positions[i])
             if dxl_addparam_result != True:
                 print("[ID:%03d] groupSyncWrite addparam failed" % self.id_list[i])
-                quit()
+                self.switchTorque('quit')
         dxl_comm_result = groupSyncWrite.txPacket()
         if dxl_comm_result != COMM_SUCCESS:
             print("%s" % self.packetHandler.getTxRxResult(dxl_comm_result))
@@ -131,8 +138,7 @@ class Lywal:
             if dxl_addparam_result != True:
                 print(dxl_addparam_result)
                 print("[Index:" + str(index) + ", ID:" + str(key) + "] groupSyncWrite addparam failed")
-                self.switchTorque('disable')
-                quit()
+                self.switchTorque('quit')
 
         dxl_comm_result = groupSyncWrite.txPacket()
         if dxl_comm_result != COMM_SUCCESS:
@@ -143,21 +149,39 @@ class Lywal:
     def rotateJoints(self, anglePairs: dict):
         targetDict = {}
         initialState: list = self.readPersentPosition()
-        print("\n")
-        print(initialState)
-        print("\n")
+
+        if self.mode != 'multi_mode':
+            print('Lywal was not set to multi mode, continuing in multi mode... ')
+            self.switchMode('multi_mode')
+
         for index, (key, value) in enumerate(anglePairs.items()):
             targetDict[int(key)] = fancyRotate(initialState[key-1], degToPositionalCode(int(value)))
-            # print("target: " + str(degToPositionalCode(int(value))))
-            # print("current: " + str(initialState[key-1]))
-            # print("fancy: " + str(fancyRotate(initialState[key-1], degToPositionalCode(int(value)))))
         self.writeData(ADDR_MX_GOAL_POSITION, LEN_MX_GOAL_POSITION, targetDict)
+
+    # Rotate in multi mode. Angle input in degrees. 
+    def rotateGroup(self, angle: int, *servoList):
+        runDegree = 0
+        startTime = time.time()
+        initialState = self.readPersentPosition()
+        targetDict = {}
+        targetArray = self.id_list
+        if len(servoList) != 0:
+            targetArray = servoList[0]
+
+        while runDegree < angle:
+            if time.time() - startTime > runDegree * self.deltaT:
+                for servo in targetArray:
+                    if servo in [0, 2, 6, 7]:
+                        targetDict[servo] = int(initialState[servo] - degToPositionalCode(runDegree))
+                    else:
+                        targetDict[servo] = int(initialState[servo] + degToPositionalCode(runDegree))
+                runDegree += 1
+                self.writeData(ADDR_MX_GOAL_POSITION, LEN_MX_GOAL_POSITION, targetDict)
 
     def rotateToZero(self):
         if len(self.positionZero) !=  8:
             print('Position zero has not been set. ')
-            self.switchTorque('disable')
-            quit(1)
+            self.switchTorque('quit')
         targetDict = {}
         for index, value in enumerate(self.readPersentPosition()):
             offest = positionalCodeToDeg((self.positionZero[index] % 4096) - (value % 4096))
@@ -196,15 +220,15 @@ class Lywal:
 
 # Parameter dictionary contains "repetitive: int" and "servos: list". 
     def trot(self, **paramOptions: dict):
-        repetitiveSet: int = 0
-        if 'repetitive' not in paramOptions or paramOptions['repetitive'] <= 0:
+        repetitiveSet: int = 1
+        if 'repetitive' in paramOptions and paramOptions['repetitive'] > 0:
             repetitiveSet = 1
-        else:
-            repetitiveSet = paramOptions['repetitive']
-        
-        targetServos: list = self.id_list
+        durationSet: int = 3
+        if 'duration' in paramOptions and paramOptions['duration'] > 0:
+            repetitiveSet = paramOptions['duration']
+        targetServo: list = self.id_list
         if 'servos' in paramOptions and len(paramOptions['servos']) in range(1, 8):
-            targetServos = paramOptions['servos']
+            targetServo = paramOptions['servos']
         
         destList = []        
 
@@ -215,7 +239,7 @@ class Lywal:
             desth = init.init(T, deltaT)
             dxl = self.readPersentPosition()
 
-            while runCount < desiredCount and time.time() - startTime < 3:
+            while runCount < desiredCount and time.time() - startTime < durationSet:
                 currentStartTime = time.time() - startTime
                 if currentStartTime > runCount * deltaT:
                     destIndex = int(math.floor((runCount) % (T / deltaT)))
@@ -234,68 +258,67 @@ class Lywal:
                     ]
 
                     targetDict = {}
-                    for index, servo in enumerate(targetServos):
+                    for index, servo in enumerate(targetServo):
                         targetDict[servo] = destList[index]
 
-                    print('Troting:')
+                    print('Troting: ')
                     print(targetDict)
                     self.writeData(ADDR_MX_GOAL_POSITION, LEN_MX_GOAL_POSITION, targetDict)
-                    #  self.writeDataAll(ADDR_MX_GOAL_POSITION, LEN_MX_GOAL_POSITION, destList)
 
                     runCount += 1
 
     def claw(self):
-        Theta= [i for i in range(1, 9)]
-        id = [1,2,3,4]
+        Theta = [i for i in range(1, 9)]
+        servoIDs = [1,2,3,4]
         Theta1 = [1,2,3,4]
-        detT, x = 0.05, 0
+        x = 0
 
-        t0 = time.time()                             #向前滚
+        startTime = time.time()                             #向前滚
         dxl = self.readPersentPosition()
 
-        while x < 121:
-            t = time.time() - t0
-            if t > x * detT:
-                for i in [0,2,6,7]:
-                    Theta[i] = int(dxl[i] - 4096 / 360 *1*x)
-                for i in [1,3,4,5]:
-                    Theta[i] = int(dxl[i] + 4096 / 360 *1*x)
-                x = x + 1
-                self.writeDataAll(self.id_list, ADDR_MX_GOAL_POSITION, LEN_MX_GOAL_POSITION, Theta)
+        # while x < 121:
+        #     t = time.time() - startTime
+        #     if t > x * self.deltaT:
+        #         for i in [0,2,6,7]:
+        #             Theta[i] = int(dxl[i] - 4096 / 360 * 1 * x)
+        #         for i in [1,3,4,5]:
+        #             Theta[i] = int(dxl[i] + 4096 / 360 * 1 * x)
+        #         x = x + 1
+        #         self.writeDataAll(self.id_list, ADDR_MX_GOAL_POSITION, LEN_MX_GOAL_POSITION, Theta)
+
+        self.rotateGroup(120)
         time.sleep(1)                         #前轮张开一定角度
-        # id = [1,2]
         dxl = self.readPersentPosition()
-        # Theta1 = [1,2]
         for i in enumerate(Theta1.items()):
             Theta1[i] = int(4096 / 360 * 15+ dxl[i])
 
-        self.writeDataAll(id, ADDR_MX_GOAL_POSITION, LEN_MX_GOAL_POSITION, Theta1)
+        self.writeDataAll(servoIDs, ADDR_MX_GOAL_POSITION, LEN_MX_GOAL_POSITION, Theta1)
         time.sleep(1)                            #向前滚一定角度
-        t0 = time.time()
+        startTime = time.time()
         x = 0
         dxl = self.readPersentPosition()
         while x<60:
-            t = time.time() - t0
-            if t> x *detT:
+            t = time.time() - startTime
+            if t> x *self.deltaT:
                 for i in [0,2,6,7]:#[0,2,6,7]:
                     Theta[i] = int(dxl[i] -4096 / 360 *1*x)
                 for i in [1,3,4,5]:#[1,3,4,5]:
                     Theta[i] = int(dxl[i] +4096 / 360 *1*x)
                 x = x + 1
                 self.writeDataAll(self.id_list, ADDR_MX_GOAL_POSITION, LEN_MX_GOAL_POSITION, Theta)
-        dxl = self.readPersentPosition(id)
+        dxl = self.readPersentPosition(servoIDs)
         time.sleep(1)                                   #前轮夹起棍子
-        dxl = self.readPersentPosition(id)
+        dxl = self.readPersentPosition(servoIDs)
         for i in range(len(Theta1)):
             Theta1[i] = int(-4096 / 360 * 6+ dxl[i])
-        self.writeDataAll(id, ADDR_MX_GOAL_POSITION, LEN_MX_GOAL_POSITION, Theta1)
+        self.writeDataAll(servoIDs, ADDR_MX_GOAL_POSITION, LEN_MX_GOAL_POSITION, Theta1)
         x=0
         time.sleep(1)                                   #向后转
         dxl = self.readPersentPosition()
-        t0 = time.time()
+        startTime = time.time()
         while x<240:
-            t = time.time() - t0
-            if t> x *detT:
+            t = time.time() - startTime
+            if t> x *self.deltaT:
                 for i in [0,2,6,7]:#[0,2,6,7]:
                     Theta[i] = int(dxl[i] +4096 / 360 *1* x)
                 for i in [1,3,4,5]:#[1,3,4,5]:
