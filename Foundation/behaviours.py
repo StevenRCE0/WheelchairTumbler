@@ -1,10 +1,8 @@
 import math
-import numpy as np
 import time
 import Foundation.init as init
 from Foundation.device import *
 from Foundation.basis import *
-from Foundation.nijie import nijie
 
 from dynamixel_sdk import *
 
@@ -248,7 +246,7 @@ class Lywal:
             self.packetHandler.write2ByteTxRx(self.portHandler, servoMap[groupIndex * 2 + 1], ADDR_MX_MOVING_SPEED, constructPower(power, 0))
             self.packetHandler.write2ByteTxRx(self.portHandler, servoMap[groupIndex * 2 + 2], ADDR_MX_MOVING_SPEED, constructPower(power, 1))
 
-# Parameter dictionary contains "repetitive: int" and "servos: list". 
+    # Parameter dictionary includes "repetitive: int" and "servos: list". 
     def trot(self, **paramOptions: dict):
         repetitiveSet: int = 1
         if 'repetitive' in paramOptions and paramOptions['repetitive'] > 0:
@@ -298,7 +296,7 @@ class Lywal:
                     runCount += 1
 
     def claw(self):
-        clawServos = [1,2,3,4]
+        clawServos = [1, 2, 3, 4]
         
         # 向前滚
         self.rotateGroup(120)
