@@ -26,7 +26,9 @@ print(Robot.initialPositions)
 Robot.rotateJoints(initializeRotationDict())
 sleep(1)
 Robot.positionZero = Robot.readPersentPosition()
+Robot.rotateToZero()
 Robot.trot(repetitive = 1)
+Robot.rotateToZero()
 
 Robot.switchTorque('disable')
 

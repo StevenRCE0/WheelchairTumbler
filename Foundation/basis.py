@@ -68,3 +68,4 @@ def solveRotationConflict(angleDict: dict) -> dict:
         if logicalID % 2 == 0 and angleDict[logicalID] > angleDict[logicalID - 1]:
             resultDict[logicalID] -= 4096
     return resultDict
+    
