@@ -160,21 +160,51 @@ class Lywal:
 
     # Rotate in multi mode. Angle input in degrees. 
     def rotateGroup(self, angle: int, *servoList):
+        targetArray = self.id_list
+        if len(servoList) != 0:
+            targetArray = servoList[0]
+        angleSet, directionFlag = angle, 1
+        if angle < 0:
+            angleSet = -angle
+            directionFlag = -1
+
+        if self.mode != 'multi_mode':
+            print('Lywal was not set to multi mode, continuing in multi mode... ')
+            self.switchMode('multi_mode')
+
         runDegree = 0
         startTime = time.time()
         initialState = self.readPersentPosition()
         targetDict = {}
-        targetArray = self.id_list
-        if len(servoList) != 0:
-            targetArray = servoList[0]
 
         while runDegree < angle:
             if time.time() - startTime > runDegree * self.deltaT:
                 for servo in targetArray:
                     if servo in [0, 2, 6, 7]:
-                        targetDict[servo] = int(initialState[servo] - degToPositionalCode(runDegree))
+                        targetDict[servo] = int(initialState[servo] - (directionFlag * degToPositionalCode(runDegree)))
                     else:
-                        targetDict[servo] = int(initialState[servo] + degToPositionalCode(runDegree))
+                        targetDict[servo] = int(initialState[servo] + (directionFlag * degToPositionalCode(runDegree)))
+                runDegree += 1
+                self.writeData(ADDR_MX_GOAL_POSITION, LEN_MX_GOAL_POSITION, targetDict)
+
+    def manipulateClaw(self, angle: int, servoList):
+        if len(servoList) != 4:
+            print('Manipulate claw for 4 servos at a time, we\'re not continuing... ')
+            self.switchTorque('quit')
+
+        if self.mode != 'multi_mode':
+            print('Lywal was not set to multi mode, continuing in multi mode... ')
+            self.switchMode('multi_mode')
+
+        runDegree = 0
+        startTime = time.time()
+        initialState = self.readPersentPosition()
+        targetDict = {}
+
+        while runDegree < angle:
+            if time.time() - startTime > runDegree * self.deltaT:
+                for servo in servoList:
+                    targetDict[servo] = int(initialState[servo] + degToPositionalCode(runDegree))
                 runDegree += 1
                 self.writeData(ADDR_MX_GOAL_POSITION, LEN_MX_GOAL_POSITION, targetDict)
 
@@ -268,60 +298,24 @@ class Lywal:
                     runCount += 1
 
     def claw(self):
-        Theta = [i for i in range(1, 9)]
-        servoIDs = [1,2,3,4]
-        Theta1 = [1,2,3,4]
-        x = 0
-
-        startTime = time.time()                             #向前滚
-        dxl = self.readPersentPosition()
-
-        # while x < 121:
-        #     t = time.time() - startTime
-        #     if t > x * self.deltaT:
-        #         for i in [0,2,6,7]:
-        #             Theta[i] = int(dxl[i] - 4096 / 360 * 1 * x)
-        #         for i in [1,3,4,5]:
-        #             Theta[i] = int(dxl[i] + 4096 / 360 * 1 * x)
-        #         x = x + 1
-        #         self.writeDataAll(self.id_list, ADDR_MX_GOAL_POSITION, LEN_MX_GOAL_POSITION, Theta)
-
+        clawServos = [1,2,3,4]
+        
+        # 向前滚
         self.rotateGroup(120)
-        time.sleep(1)                         #前轮张开一定角度
-        dxl = self.readPersentPosition()
-        for i in enumerate(Theta1.items()):
-            Theta1[i] = int(4096 / 360 * 15+ dxl[i])
-
-        self.writeDataAll(servoIDs, ADDR_MX_GOAL_POSITION, LEN_MX_GOAL_POSITION, Theta1)
-        time.sleep(1)                            #向前滚一定角度
-        startTime = time.time()
-        x = 0
-        dxl = self.readPersentPosition()
-        while x<60:
-            t = time.time() - startTime
-            if t> x *self.deltaT:
-                for i in [0,2,6,7]:#[0,2,6,7]:
-                    Theta[i] = int(dxl[i] -4096 / 360 *1*x)
-                for i in [1,3,4,5]:#[1,3,4,5]:
-                    Theta[i] = int(dxl[i] +4096 / 360 *1*x)
-                x = x + 1
-                self.writeDataAll(self.id_list, ADDR_MX_GOAL_POSITION, LEN_MX_GOAL_POSITION, Theta)
-        dxl = self.readPersentPosition(servoIDs)
-        time.sleep(1)                                   #前轮夹起棍子
-        dxl = self.readPersentPosition(servoIDs)
-        for i in range(len(Theta1)):
-            Theta1[i] = int(-4096 / 360 * 6+ dxl[i])
-        self.writeDataAll(servoIDs, ADDR_MX_GOAL_POSITION, LEN_MX_GOAL_POSITION, Theta1)
-        x=0
-        time.sleep(1)                                   #向后转
-        dxl = self.readPersentPosition()
-        startTime = time.time()
-        while x<240:
-            t = time.time() - startTime
-            if t> x *self.deltaT:
-                for i in [0,2,6,7]:#[0,2,6,7]:
-                    Theta[i] = int(dxl[i] +4096 / 360 *1* x)
-                for i in [1,3,4,5]:#[1,3,4,5]:
-                    Theta[i] = int(dxl[i] -4096 / 360 *1* x)
-                x = x + 1
-                self.writeDataAll(self.id_list, ADDR_MX_GOAL_POSITION, LEN_MX_GOAL_POSITION, Theta)
+        time.sleep(1)
+        
+        # 前轮张开一定角度
+        self.manipulateClaw(15, clawServos)
+        time.sleep(1)
+        
+        # 向前滚一定角度
+        self.rotateGroup(60)
+        time.sleep(1)
+        
+        # 前轮夹起棍子
+        self.manipulateClaw(-6, clawServos)
+        time.sleep(1)
+        
+        # 向后转
+        self.rotateGroup(-240)
+        time.sleep(1)
