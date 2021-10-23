@@ -1,3 +1,4 @@
+from math import log
 import Foundation.device as device
 
 # Control table address
@@ -58,14 +59,24 @@ def degToPositionalCode(degree, *clampRange) -> int:
     else:
         return int(ratio * degree)
 
+def positionalCodeToDeg(positionalCode) -> int:
+    ratio = 360 / 4096
+    return int(ratio * positionalCode)
+
+# Angles provided in positional codes. 
 def fancyRotate(current: int, target: int) -> int:
     return current + target
     
 # TODO: test it out! 
-def solveRotationConflict(angleDict: dict) -> dict:
+# Angles provided in degrees. 
+def resolveRotationConflict(angleDict: dict) -> dict:
     resultDict = angleDict.copy()
-    for index, (logicalID, servoID) in enumerate(servoMap):
-        if logicalID % 2 == 0 and angleDict[logicalID] > angleDict[logicalID - 1]:
-            resultDict[logicalID] -= 4096
+    for index, (logicalID, servoID) in enumerate(servoMap.items()):
+        if index % 2 == 0:
+            continue
+        servo1 = positionalCodeToDeg(angleDict[logicalID])
+        servo2 = positionalCodeToDeg(angleDict[logicalID - 1])
+        if abs(360 - servo1 - servo2) > 180:
+            print("Conflict detected for servo "+str(servoID)+' and '+str(servoMap[logicalID-1]))
     return resultDict
     

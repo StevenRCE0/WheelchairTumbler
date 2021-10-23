@@ -29,8 +29,6 @@ class Lywal:
                     print("%s" % self.packetHandler.getTxRxResult(dxl_comm_result))
                 elif dxl_error != 0:
                     print("%s" % self.packetHandler.getRxPacketError(dxl_error))
-                else:
-                    print("Dynamixel#" + str(id) + " has been successfully connected")
         elif switch == 'disable':
             for id in self.id_list:
                 dxl_comm_result, dxl_error = self.packetHandler.write1ByteTxRx(self.portHandler, id, ADDR_MX_TORQUE_ENABLE,
@@ -62,7 +60,7 @@ class Lywal:
     def switchMode(self, mode_name: str, *servoParam: list):
         servoArray = self.id_list
         if len(servoParam) != 0:
-            servoArray = servoParam
+            servoArray = servoParam[0]
     
         if mode_name == 'wheel_mode':
             for id in servoArray:
@@ -98,7 +96,6 @@ class Lywal:
                 print("%s" % self.packetHandler.getTxRxResult(dxl_comm_result))
             elif dxl_error != 0:
                 print("%s" % self.packetHandler.getRxPacketError(dxl_error))
-            print("[ID:%03d]  PresPos:%03d" % (id, dxl1_present_position))
             dxl.append(dxl1_present_position)
         return dxl
 
@@ -151,12 +148,11 @@ class Lywal:
         print("\n")
         for index, (key, value) in enumerate(anglePairs.items()):
             targetDict[int(key)] = fancyRotate(initialState[key-1], degToPositionalCode(int(value)))
-            print("target: " + str(degToPositionalCode(int(value))))
-            print("current: " + str(initialState[key-1]))
-            print("fancy: " + str(fancyRotate(initialState[key-1], degToPositionalCode(int(value)))))
+            # print("target: " + str(degToPositionalCode(int(value))))
+            # print("current: " + str(initialState[key-1]))
+            # print("fancy: " + str(fancyRotate(initialState[key-1], degToPositionalCode(int(value)))))
         self.writeData(ADDR_MX_GOAL_POSITION, LEN_MX_GOAL_POSITION, targetDict)
 
-# TODO: not tested yet
     def rotateToZero(self):
         if len(self.positionZero) !=  8:
             print('Position zero has not been set. ')
@@ -164,9 +160,13 @@ class Lywal:
             quit(1)
         targetDict = {}
         for index, value in enumerate(self.readPersentPosition()):
-            offest = value // 4096 - self.positionZero[index] // 4096
+            offest = positionalCodeToDeg((self.positionZero[index] % 4096) - (value % 4096))
+            if index == 5:
+                offest = offest - 360
             targetDict[index + 1] = offest
-        self.writeData(ADDR_MX_GOAL_POSITION, LEN_MX_GOAL_POSITION, targetDict)
+        # targetDict = resolveRotationConflict(targetDict)
+        print(targetDict)
+        self.rotateJoints(targetDict)
 
     def drive(self, powerArray: list):
         def constructPower(power, servoIndex):
@@ -197,7 +197,7 @@ class Lywal:
 # Parameter dictionary contains "repetitive: int" and "servos: list". 
     def trot(self, **paramOptions: dict):
         repetitiveSet: int = 0
-        if 'repetitive' not in paramOptions or paramOptions-'repetitive' <= 0:
+        if 'repetitive' not in paramOptions or paramOptions['repetitive'] <= 0:
             repetitiveSet = 1
         else:
             repetitiveSet = paramOptions['repetitive']
@@ -215,7 +215,7 @@ class Lywal:
             desth = init.init(T, deltaT)
             dxl = self.readPersentPosition()
 
-            while runCount < desiredCount and time.time() - startTime < 10:
+            while runCount < desiredCount and time.time() - startTime < 3:
                 currentStartTime = time.time() - startTime
                 if currentStartTime > runCount * deltaT:
                     destIndex = int(math.floor((runCount) % (T / deltaT)))
@@ -236,6 +236,9 @@ class Lywal:
                     targetDict = {}
                     for index, servo in enumerate(targetServos):
                         targetDict[servo] = destList[index]
+
+                    print('Troting:')
+                    print(targetDict)
                     self.writeData(ADDR_MX_GOAL_POSITION, LEN_MX_GOAL_POSITION, targetDict)
                     #  self.writeDataAll(ADDR_MX_GOAL_POSITION, LEN_MX_GOAL_POSITION, destList)
 
