@@ -47,21 +47,18 @@ class Lywal:
             self.switchTorque('quit')
         return
 
-    # TODO: make this work
+    # Now this should be semi-working
+    # The function controls max torque, not the step mode functions. 
     def setSpeed(self, powerPairs: dict):
         if self.mode == 'wheel_mode':
             print('In wheel mode, there\'s no need for setSpeed function. ')
             return
 
-        targetDict = {}
         for index, (key, value) in enumerate(powerPairs.items()):
+            finalPower = int(clamp(409.6 * value, 1, 1023))
             if value == 100:
-                targetDict[key] = 0
-                continue
-            targetValue = int(clamp(409.6 * value, 1, 1023))
-            targetDict[key] = targetValue
-        print(targetDict)
-        self.writeData(ADDR_MX_MOVING_SPEED, LEN_MX_MOVING_SPEED, targetDict)
+                finalPower = 0
+            self.packetHandler.write2ByteTxRx(self.portHandler, key, ADDR_MX_MOVING_SPEED, finalPower)
 
     def switchMode(self, mode_name: str, *servoParam: list):
         servoArray = self.id_list
@@ -157,6 +154,7 @@ class Lywal:
         self.writeData(ADDR_MX_GOAL_POSITION, LEN_MX_GOAL_POSITION, targetDict)
 
     # Rotate in multi mode. Angle input in degrees. 
+    # Step mode. 
     def rotateGroup(self, angle: int, *servoList):
         targetArray = self.id_list
         if len(servoList) != 0:
@@ -178,16 +176,16 @@ class Lywal:
         while runDegree < angleSet:
             if time.time() - startTime > runDegree * self.deltaT:
                 for servo in targetArray:
-                    if servo in [0, 2, 6, 7]:
-                        targetDict[servo] = int(initialState[servo] - (directionFlag * degToPositionalCode(runDegree)))
+                    if servo in [1, 3, 7, 8]:
+                        targetDict[servo] = int(initialState[servo - 1] - (directionFlag * degToPositionalCode(runDegree)))
                     else:
-                        targetDict[servo] = int(initialState[servo] + (directionFlag * degToPositionalCode(runDegree)))
+                        targetDict[servo] = int(initialState[servo - 1] + (directionFlag * degToPositionalCode(runDegree)))
                 runDegree += 1
                 self.writeData(ADDR_MX_GOAL_POSITION, LEN_MX_GOAL_POSITION, targetDict)
 
     def manipulateClaw(self, angle: int, servoList):
-        if len(servoList) != 4:
-            print('Manipulate claw for 4 servos at a time, we\'re not continuing... ')
+        if len(servoList) % 2 != 0:
+            print('Manipulate claw for even amount of servos at a time, we\'re not continuing... ')
             self.switchTorque('quit')
 
         if self.mode != 'multi_mode':
@@ -198,11 +196,15 @@ class Lywal:
         startTime = time.time()
         initialState = self.readPersentPosition()
         targetDict = {}
+        angleSet, directionFlag = angle, 1
+        if angle < 0:
+            angleSet = -angle
+            directionFlag = -1
 
-        while runDegree < angle:
+        while runDegree < angleSet:
             if time.time() - startTime > runDegree * self.deltaT:
                 for servo in servoList:
-                    targetDict[servo] = int(initialState[servo] + degToPositionalCode(runDegree))
+                    targetDict[servo] = int(initialState[servo - 1] + degToPositionalCode(directionFlag * runDegree))
                 runDegree += 1
                 self.writeData(ADDR_MX_GOAL_POSITION, LEN_MX_GOAL_POSITION, targetDict)
 
@@ -303,7 +305,7 @@ class Lywal:
         time.sleep(1)
         
         # 前轮张开一定角度
-        self.manipulateClaw(15, clawServos)
+        self.manipulateClaw(30, clawServos)
         time.sleep(1)
         
         # 向前滚一定角度
@@ -311,7 +313,7 @@ class Lywal:
         time.sleep(1)
         
         # 前轮夹起棍子
-        self.manipulateClaw(-6, clawServos)
+        self.manipulateClaw(-20, clawServos)
         time.sleep(1)
         
         # 向后转
