@@ -175,7 +175,7 @@ class Lywal:
         initialState = self.readPersentPosition()
         targetDict = {}
 
-        while runDegree < angle:
+        while runDegree < angleSet:
             if time.time() - startTime > runDegree * self.deltaT:
                 for servo in targetArray:
                     if servo in [0, 2, 6, 7]:
