@@ -38,8 +38,10 @@ class Lywal:
                                                                         TORQUE_DISABLE)
                 if dxl_comm_result != COMM_SUCCESS:
                     print("%s" % self.packetHandler.getTxRxResult(dxl_comm_result))
+                    # self.switchTorque('quit')
                 elif dxl_error != 0:
                     print("%s" % self.packetHandler.getRxPacketError(dxl_error))
+                    # self.switchTorque('quit')
             if switch == 'quit':
                 quit(1)
         else:
@@ -96,8 +98,10 @@ class Lywal:
             )
             if dxl_comm_result != COMM_SUCCESS:
                 print("%s" % self.packetHandler.getTxRxResult(dxl_comm_result))
+                # self.switchTorque('quit')
             elif dxl_error != 0:
                 print("%s" % self.packetHandler.getRxPacketError(dxl_error))
+                # self.switchTorque('quit')
             dxl.append(dxl1_present_position)
         return dxl
 
@@ -204,20 +208,24 @@ class Lywal:
         while runDegree < angleSet:
             if time.time() - startTime > runDegree * self.deltaT:
                 for servo in servoList:
-                    targetDict[servo] = int(initialState[servo - 1] + degToPositionalCode(directionFlag * runDegree))
+                    targetDict[servo] = int(initialState[servo - 1] + (directionFlag * degToPositionalCode(runDegree)))
                 runDegree += 1
                 self.writeData(ADDR_MX_GOAL_POSITION, LEN_MX_GOAL_POSITION, targetDict)
 
-    def rotateToZero(self):
+    def rotateToZero(self, *servoList: list):
         if len(self.positionZero) !=  8:
             print('Position zero has not been set. ')
             self.switchTorque('quit')
         targetDict = {}
-        for index, value in enumerate(self.readPersentPosition()):
-            offest = positionalCodeToDeg((self.positionZero[index] % 4096) - (value % 4096))
-            if index == 5:
+        targetServos = self.id_list
+        if len(servoList) != 0:
+            targetServos = servoList[0]
+
+        for servoID in targetServos:
+            offest = positionalCodeToDeg((self.positionZero[servoID - 1] % 4096) - (self.readPersentPosition()[servoID - 1] % 4096))
+            if servoID == 6:
                 offest = offest - 360
-            targetDict[index + 1] = offest
+            targetDict[servoID] = offest
         # targetDict = resolveRotationConflict(targetDict)
         print(targetDict)
         self.rotateJoints(targetDict)

@@ -1,4 +1,6 @@
 from time import sleep
+
+from dynamixel_sdk import robotis_def
 from Foundation.behaviours import *
 import Foundation.basis as basis
 
@@ -32,6 +34,45 @@ sleep(2)
 # sleep(20)
 
 Robot.deltaT = 0.01
+Robot.rotateGroup(30, [1, 2])
+Robot.rotateGroup(-30, [1, 2])
+Robot.rotateToZero([1, 2])
+sleep(2)
+Robot.manipulateClaw(40, [3, 4, 5, 7])
+Robot.rotateGroup(-10, [3, 4])
+Robot.manipulateClaw(50, [1, 2])
+Robot.manipulateClaw(30, [6, 8])
+sleep(2)
+Robot.manipulateClaw(40, [3, 4, 5, 7])
+Robot.manipulateClaw(40, [6, 8])
+sleep(2)
+Robot.manipulateClaw(-50, [1, 2])
+sleep(4)
+Robot.rotateGroup(360, [1, 2])
+Robot.manipulateClaw(20, [1, 2])
+Robot.rotateGroup(45, [1, 2])
+Robot.rotateGroup(-45, [1, 2])
+Robot.manipulateClaw(-20, [1, 2])
+
+sleep(3)
+Robot.rotateToZero()
+
+sleep(5)
+
+Robot.trot(repetitive= 3)
+Robot.rotateToZero()
+
+Robot.switchMode('wheel_mode')
+Robot.drive([70, -70, 70, -70])
+sleep(5)
+Robot.switchTorque('quit')
+
+
+sleep(1)
+Robot.rotateGroup(360, [5, 6, 7, 8])
+sleep(2)
+Robot.rotateToZero()
+sleep(1)
 # Robot.claw()
 Robot.manipulateClaw(80, [5, 6, 7, 8])
 sleep(1)
