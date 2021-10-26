@@ -11,7 +11,6 @@ ADDR_MX_PRESENT_POSITION    = 36
 ADDR_MX_PRESENT_LOAD        = 40
 
 LEN_MX_GOAL_POSITION        = 4
-LEN_MX_MOVING_SPEED         = 2
 LEN_MX_PRESENT_LOAD         = 4
 
 DEVICENAME                  = device.device()

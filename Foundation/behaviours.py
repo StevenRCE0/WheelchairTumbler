@@ -9,7 +9,6 @@ from dynamixel_sdk import *
 class Lywal:
 
     # Robot basic parameters
-    jointSpeed = 100
     deltaT = 0.05
     clawState = [0, 0, 0, 0]
     wheelState = [0, 0, 0, 0]
