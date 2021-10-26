@@ -12,8 +12,6 @@ Robot = Lywal(id_list, portHandler, packetHandler)
 
 # 初始化动作
 Robot.switchTorque('enable')
-Robot.switchMode('multi_mode')
-print(Robot.initialPositions)
 Robot.rotateServo(initializeRotationDict())
 
 # Robot.switchTorque('disable')
@@ -71,7 +69,7 @@ Robot.switchTorque('quit')
 sleep(1)
 Robot.rotateGroup(360, [5, 6, 7, 8])
 sleep(2)
-Robot.rotateToZero()
+Robot.rotatePositionZero()
 sleep(1)
 Robot.manipulateClaw(80, [5, 6, 7, 8])
 sleep(1)

@@ -11,9 +11,6 @@ class Lywal:
     # Robot basic parameters
     jointSpeed = 100
     deltaT = 0.05
-    initialPositions = []
-    positionZero = []
-
     clawState = [0, 0, 0, 0]
     wheelState = [0, 0, 0, 0]
 
@@ -21,7 +18,6 @@ class Lywal:
         self.id_list = id_list
         self.portHandler = portHandler
         self.packetHandler = packetHandler
-        self.initialPositions: list = self.readPersentPosition()
         for id in id_list:
             self.packetHandler.write2ByteTxRx(self.portHandler, id, ADDR_MX_CW, DXL_MULTI_MODE_CW_VALUE)
             self.packetHandler.write2ByteTxRx(self.portHandler, id, ADDR_MX_CCW, DXL_MULTI_MODE_CCW_VALUE)
@@ -71,10 +67,10 @@ class Lywal:
             )
             if dxl_comm_result != COMM_SUCCESS:
                 print("%s" % self.packetHandler.getTxRxResult(dxl_comm_result))
-                # self.switchTorque('quit')
+                self.switchTorque('quit')
             elif dxl_error != 0:
                 print("%s" % self.packetHandler.getRxPacketError(dxl_error))
-                # self.switchTorque('quit')
+                self.switchTorque('quit')
             if type == 'degree':
                 dxl.append(positionalCodeToDeg(dxl1_present_position))
             else:
@@ -108,39 +104,7 @@ class Lywal:
             targetDict[int(key)] = fancyRotate(initialState[key-1], degToPositionalCode(int(value)))
         self.writeData(ADDR_MX_GOAL_POSITION, LEN_MX_GOAL_POSITION, targetDict)
 
-    def rotateJoints(self, anglePairs: dict):
-        targetArray = list(anglePairs.keys())
-        absolutePair = {}
-
-        runDegree = 0
-        startTime = time.time()
-        initialState = self.readPersentPosition()
-        targetDict = {}
-        directionDict = {}
-
-        angleSet = max(anglePairs.values())
-
-        for index, (key, value) in enumerate(anglePairs.items()):
-            if value < 0:
-                directionDict[key] = -1
-            else:
-                directionDict[key] = 1
-            absolutePair[key] = directionDict[key] * value
-
-        while runDegree < angleSet:
-            if time.time() - startTime > runDegree * self.deltaT:
-                for servo in targetArray:
-                    if runDegree >= absolutePair[servo]:
-                        continue
-                    if servo in [1, 3, 7, 8]:
-                        targetDict[servo] = int(initialState[servo - 1] - (directionDict[servo] * degToPositionalCode(runDegree)))
-                    else:
-                        targetDict[servo] = int(initialState[servo - 1] + (directionDict[servo] * degToPositionalCode(runDegree)))
-                runDegree += 1
-                self.writeData(ADDR_MX_GOAL_POSITION, LEN_MX_GOAL_POSITION, targetDict)
-
-    # Rotate in multi mode. Angle input in degrees. 
-    # Step mode. 
+    # Angle input in degrees. 
     def rotateGroup(self, angle: int, *servoList):
         targetArray = self.id_list
         if len(servoList) != 0:
