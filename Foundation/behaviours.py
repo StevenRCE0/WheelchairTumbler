@@ -43,24 +43,32 @@ class Lywal:
                     print("%s" % self.packetHandler.getRxPacketError(dxl_error))
                     # self.switchTorque('quit')
             if switch == 'quit':
+                self.portHandler.closePort()
                 quit(1)
         else:
-            print("Insufficient parameters of switch_torque! ")
+            print("Insufficient parameters of switchTorque! ")
             self.switchTorque('quit')
         return
 
-    # Now this should be semi-working
-    # The function controls max torque, not the step mode functions. 
-    def setSpeed(self, powerPairs: dict):
+    # Now this should be semi-working. 
+    # Set mode to "delta=delta: int" or "speed=speedDict: dict". 
+    def setSpeed(self, **powerPairs):
         if self.mode == 'wheel_mode':
             print('In wheel mode, there\'s no need for setSpeed function. ')
             return
 
-        for index, (key, value) in enumerate(powerPairs.items()):
-            finalPower = int(clamp(409.6 * value, 1, 1023))
-            if value == 100:
-                finalPower = 0
-            self.packetHandler.write2ByteTxRx(self.portHandler, key, ADDR_MX_MOVING_SPEED, finalPower)
+        if 'speed' in powerPairs and len(powerPairs['speed']) > 0:
+            for index, (key, value) in enumerate(powerPairs['speed'].items()):
+                finalPower = int(clamp(409.6 * value, 1, 1023))
+                if value == 100:
+                    finalPower = 0
+                self.packetHandler.write2ByteTxRx(self.portHandler, key, ADDR_MX_MOVING_SPEED, finalPower)
+        elif 'delta' in powerPairs:
+            deltaTRange = DELTA_T_MAX - DELTA_T_MIN
+            self.deltaT = clamp(DELTA_T_MAX - (deltaTRange * powerPairs['delta'] / 100), DELTA_T_MIN, DELTA_T_MAX)
+        else:
+            print('Insufficient parameters of setSpeed! ')
+            return
 
     def switchMode(self, mode_name: str, *servoParam: list):
         servoArray = self.id_list
