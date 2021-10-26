@@ -37,13 +37,13 @@ POSITION_MODE               = 3
 # dxl_goal_position = [DXL_MINIMUM_POSITION_VALUE, DXL_MAXIMUM_POSITION_VALUE]  # Goal position
 
 DELTA_T_MIN                 = 0
-DELTA_T_MAX                 = 0.5
+DELTA_T_MAX                 = 0.1
 servoMap = {1:1, 2:2, 3:3, 4:4, 5:5, 6:7, 7:6, 8:8}
 
 def initializeRotationDict() -> dict:
     result = {}
-    for index in range(8):
-        result[index + 1] = -85
+    for index in range(1, 9):
+        result[index] = -85
     return result
 
 def clamp(input, min, max):
@@ -65,17 +65,33 @@ def positionalCodeToDeg(positionalCode) -> int:
 # Angles provided in positional codes. 
 def fancyRotate(current: int, target: int) -> int:
     return current + target
-    
-# TODO: test it out! 
-# Angles provided in degrees. 
-def resolveRotationConflict(angleDict: dict) -> dict:
-    resultDict = angleDict.copy()
-    for index, (logicalID, servoID) in enumerate(servoMap.items()):
-        if index % 2 == 0:
-            continue
-        servo1 = positionalCodeToDeg(angleDict[logicalID])
-        servo2 = positionalCodeToDeg(angleDict[logicalID - 1])
-        if abs(360 - servo1 - servo2) > 180:
-            print("Conflict detected for servo "+str(servoID)+' and '+str(servoMap[logicalID-1]))
-    return resultDict
-    
+
+def optimalResetRotation(angle: int) -> int:
+    if angle % 360 <= 180:
+        return angle % 360
+    else:
+        return 360 - (angle % 360)
+
+def getGroup(servoArray: list) -> list:
+    result = []
+    if [1, 2] in servoArray:
+        result.append(1)
+    if [3, 4] in servoArray:
+        result.append(2)
+    if [5, 7] in servoArray:
+        result.append(3)
+    if [6, 8] in servoArray:
+        result.append(4)
+    return result
+
+def readGroup(groupArray: list) -> list:
+    result = []
+    if 1 in groupArray:
+        result.append(1, 2)
+    if 2 in groupArray:
+        result.append(3, 4)
+    if 3 in groupArray:
+        result.append(5, 7)
+    if 4 in groupArray:
+        result.append(6, 8)
+    return result

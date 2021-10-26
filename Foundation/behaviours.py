@@ -9,17 +9,23 @@ from dynamixel_sdk import *
 class Lywal:
 
     # Robot basic parameters
-    mode = 'wheel_mode'
     jointSpeed = 100
     deltaT = 0.05
     initialPositions = []
     positionZero = []
+
+    clawState = [0, 0, 0, 0]
+    wheelState = [0, 0, 0, 0]
 
     def __init__(self, id_list: list, portHandler, packetHandler):
         self.id_list = id_list
         self.portHandler = portHandler
         self.packetHandler = packetHandler
         self.initialPositions: list = self.readPersentPosition()
+        for id in id_list:
+            self.packetHandler.write2ByteTxRx(self.portHandler, id, ADDR_MX_CW, DXL_MULTI_MODE_CW_VALUE)
+            self.packetHandler.write2ByteTxRx(self.portHandler, id, ADDR_MX_CCW, DXL_MULTI_MODE_CCW_VALUE)
+            self.packetHandler.write2ByteTxRx(self.portHandler,id, ADDR_MX_OFFSET, 6000)
 
     def switchTorque(self, switch: str, *servoArray: list):
         targetServos = self.id_list
@@ -50,52 +56,11 @@ class Lywal:
             self.switchTorque('quit')
         return
 
-    # Now this should be semi-working. 
-    # Set mode to "delta=delta: int" or "speed=speedDict: dict". 
-    def setSpeed(self, **powerPairs):
-        if self.mode == 'wheel_mode':
-            print('In wheel mode, there\'s no need for setSpeed function. ')
-            return
+    def setSpeed(self, speedPercentage):
+        deltaTRange = DELTA_T_MAX - DELTA_T_MIN
+        self.deltaT = clamp(DELTA_T_MAX - (deltaTRange * speedPercentage / 100), DELTA_T_MIN, DELTA_T_MAX)
 
-        if 'speed' in powerPairs and len(powerPairs['speed']) > 0:
-            for index, (key, value) in enumerate(powerPairs['speed'].items()):
-                finalPower = int(clamp(409.6 * value, 1, 1023))
-                if value == 100:
-                    finalPower = 0
-                self.packetHandler.write2ByteTxRx(self.portHandler, key, ADDR_MX_MOVING_SPEED, finalPower)
-        elif 'delta' in powerPairs:
-            deltaTRange = DELTA_T_MAX - DELTA_T_MIN
-            self.deltaT = clamp(DELTA_T_MAX - (deltaTRange * powerPairs['delta'] / 100), DELTA_T_MIN, DELTA_T_MAX)
-        else:
-            print('Insufficient parameters of setSpeed! ')
-            return
-
-    def switchMode(self, mode_name: str, *servoParam: list):
-        servoArray = self.id_list
-        if len(servoParam) != 0:
-            servoArray = servoParam[0]
-    
-        if mode_name == 'wheel_mode':
-            for id in servoArray:
-                self.packetHandler.write2ByteTxRx(self.portHandler, id, ADDR_MX_CW, DXL_WHEEL_MODE_CW_VALUE)
-                self.packetHandler.write2ByteTxRx(self.portHandler,id, ADDR_MX_CCW, DXL_WHEEL_MODE_CCW_VALUE)
-                self.packetHandler.write2ByteTxRx(self.portHandler, id, ADDR_MX_OFFSET, 6000)
-        elif mode_name == 'multi_mode':
-            for id in servoArray:
-                self.packetHandler.write2ByteTxRx(self.portHandler, id, ADDR_MX_CW, DXL_MULTI_MODE_CW_VALUE)
-                self.packetHandler.write2ByteTxRx(self.portHandler, id, ADDR_MX_CCW, DXL_MULTI_MODE_CCW_VALUE)
-                self.packetHandler.write2ByteTxRx(self.portHandler,id, ADDR_MX_OFFSET, 6000)
-        elif mode_name == 'joint_mode':
-            for id in servoArray:
-                self.packetHandler.write2ByteTxRx(self.portHandler, id, ADDR_MX_CW, DXL_JOINT_MODE_CW_VALUE)
-                self.packetHandler.write2ByteTxRx(self.portHandler, id, ADDR_MX_CCW, DXL_JOINT_MODE_CCW_VALUE)
-                self.packetHandler.write2ByteTxRx(self.portHandler,id, ADDR_MX_OFFSET, 6000)
-        else:
-            return
-
-        self.mode = mode_name
-
-    def readPersentPosition(self, *targetServo: list) -> list:
+    def readPersentPosition(self, *targetServo: list, type: str) -> list:
         dxl = []
         targetArray = self.id_list
         if len(targetServo) > 0:
@@ -110,29 +75,11 @@ class Lywal:
             elif dxl_error != 0:
                 print("%s" % self.packetHandler.getRxPacketError(dxl_error))
                 # self.switchTorque('quit')
-            dxl.append(dxl1_present_position)
+            if type == 'degree':
+                dxl.append(positionalCodeToDeg(dxl1_present_position))
+            else:
+                dxl.append(dxl1_present_position)
         return dxl
-
-    def writeDataAll(self, adr, adr_len, data):
-        groupSyncWrite = GroupSyncWrite(self.portHandler, self.packetHandler, adr, adr_len)
-        param_goal_positions = []
-
-        for i in range(len(self.id_list)):
-            param_goal_positions.append([
-                DXL_LOBYTE(DXL_LOWORD(data[i])),DXL_HIBYTE(DXL_LOWORD(data[i])),
-                DXL_LOBYTE(DXL_HIWORD(data[i])),DXL_HIBYTE(DXL_HIWORD(data[i]))
-            ])
-
-        for i in range(len(self.id_list)):
-            dxl_addparam_result = groupSyncWrite.addParam(self.id_list[i],param_goal_positions[i])
-            if dxl_addparam_result != True:
-                print("[ID:%03d] groupSyncWrite addparam failed" % self.id_list[i])
-                self.switchTorque('quit')
-        dxl_comm_result = groupSyncWrite.txPacket()
-        if dxl_comm_result != COMM_SUCCESS:
-            print("%s" % self.packetHandler.getTxRxResult(dxl_comm_result))
-
-        groupSyncWrite.clearParam()
     
     def writeData(self, adr, adr_len, dataPairs: dict):
         groupSyncWrite = GroupSyncWrite(self.portHandler, self.packetHandler, adr, adr_len)
@@ -153,17 +100,44 @@ class Lywal:
 
         groupSyncWrite.clearParam()
 
-    def rotateJoints(self, anglePairs: dict):
+    def rotateServo(self, anglePairs: dict):
         targetDict = {}
         initialState: list = self.readPersentPosition()
-
-        if self.mode != 'multi_mode':
-            print('Lywal was not set to multi mode, continuing in multi mode... ')
-            self.switchMode('multi_mode')
 
         for index, (key, value) in enumerate(anglePairs.items()):
             targetDict[int(key)] = fancyRotate(initialState[key-1], degToPositionalCode(int(value)))
         self.writeData(ADDR_MX_GOAL_POSITION, LEN_MX_GOAL_POSITION, targetDict)
+
+    def rotateJoints(self, anglePairs: dict):
+        targetArray = list(anglePairs.keys())
+        absolutePair = {}
+
+        runDegree = 0
+        startTime = time.time()
+        initialState = self.readPersentPosition()
+        targetDict = {}
+        directionDict = {}
+
+        angleSet = max(anglePairs.values())
+
+        for index, (key, value) in enumerate(anglePairs.items()):
+            if value < 0:
+                directionDict[key] = -1
+            else:
+                directionDict[key] = 1
+            absolutePair[key] = directionDict[key] * value
+
+        while runDegree < angleSet:
+            if time.time() - startTime > runDegree * self.deltaT:
+                for servo in targetArray:
+                    if runDegree >= absolutePair[servo]:
+                        continue
+                    if servo in [1, 3, 7, 8]:
+                        targetDict[servo] = int(initialState[servo - 1] - (directionDict[servo] * degToPositionalCode(runDegree)))
+                    else:
+                        targetDict[servo] = int(initialState[servo - 1] + (directionDict[servo] * degToPositionalCode(runDegree)))
+                runDegree += 1
+                self.writeData(ADDR_MX_GOAL_POSITION, LEN_MX_GOAL_POSITION, targetDict)
 
     # Rotate in multi mode. Angle input in degrees. 
     # Step mode. 
@@ -176,14 +150,13 @@ class Lywal:
             angleSet = -angle
             directionFlag = -1
 
-        if self.mode != 'multi_mode':
-            print('Lywal was not set to multi mode, continuing in multi mode... ')
-            self.switchMode('multi_mode')
-
         runDegree = 0
         startTime = time.time()
         initialState = self.readPersentPosition()
         targetDict = {}
+
+        for group in getGroup(targetArray):
+            self.wheelState[group - 1] += angle
 
         while runDegree < angleSet:
             if time.time() - startTime > runDegree * self.deltaT:
@@ -199,10 +172,6 @@ class Lywal:
         if len(servoList) % 2 != 0:
             print('Manipulate claw for even amount of servos at a time, we\'re not continuing... ')
             self.switchTorque('quit')
-
-        if self.mode != 'multi_mode':
-            print('Lywal was not set to multi mode, continuing in multi mode... ')
-            self.switchMode('multi_mode')
 
         runDegree = 0
         startTime = time.time()
@@ -220,49 +189,45 @@ class Lywal:
                 runDegree += 1
                 self.writeData(ADDR_MX_GOAL_POSITION, LEN_MX_GOAL_POSITION, targetDict)
 
-    def rotateToZero(self, *servoList: list):
-        if len(self.positionZero) !=  8:
-            print('Position zero has not been set. ')
-            self.switchTorque('quit')
-        targetDict = {}
-        targetServos = self.id_list
+    def rotatePositionZero(self, *servoList: list):
         if len(servoList) != 0:
             targetServos = servoList[0]
 
-        for servoID in targetServos:
-            offest = positionalCodeToDeg((self.positionZero[servoID - 1] % 4096) - (self.readPersentPosition()[servoID - 1] % 4096))
-            if servoID == 6:
-                offest = offest - 360
-            targetDict[servoID] = offest
-        # targetDict = resolveRotationConflict(targetDict)
-        print(targetDict)
-        self.rotateJoints(targetDict)
-
-    def drive(self, powerArray: list):
-        def constructPower(power, servoIndex):
-            rotationFlag = (servoIndex == 0)
-            if power > 0:
-                rotationFlag = not rotationFlag
-            power = abs(power)
-            multiplied = clamp(1024 * power // 100, 0, 1023)
-            if rotationFlag == 0:
-                return 1024 + multiplied
-            else: 
-                return multiplied
-        if len(powerArray) != 4:
-            print("Expecting 4 groups of servo. ")
-            return
-
-        rectifiedPowerArray = [
-            powerArray[0], powerArray[1],
-            -powerArray[2], -powerArray[3]
-        ]
-
-        for groupIndex, power in enumerate(rectifiedPowerArray):
-            if power == 0:
+        for clawIndex, clawValue in enumerate(self.clawState):
+            if clawValue == 0:
                 continue
-            self.packetHandler.write2ByteTxRx(self.portHandler, servoMap[groupIndex * 2 + 1], ADDR_MX_MOVING_SPEED, constructPower(power, 0))
-            self.packetHandler.write2ByteTxRx(self.portHandler, servoMap[groupIndex * 2 + 2], ADDR_MX_MOVING_SPEED, constructPower(power, 1))
+            self.manipulateClaw(-clawValue, readGroup(clawIndex + 1))
+
+        for wheelIndex, wheelValue in enumerate(self.wheelState):
+            if wheelValue % 360 == 0:
+                continue
+            self.rotateGroup(optimalResetRotation(wheelValue), readGroup(wheelIndex))
+
+    def fourWheelDrive(self, rotation: int, directionArray: list):
+        angleSet = rotation * 360
+        directionFlagArray: list = [1, 1, 1, 1, 1, 1, 1, 1]
+        for index, direction in enumerate(directionArray):
+            directionFlagArray[servoMap[index * 2 + 1] - 1] = direction
+            directionFlagArray[servoMap[index * 2 + 2] - 1] = direction
+            self.wheelState[index] += direction * rotation * 360
+
+        if self.mode != 'multi_mode':
+            print('Lywal was not set to multi mode, continuing in multi mode... ')
+            self.switchMode('multi_mode')
+        runDegree = 0
+        startTime = time.time()
+        initialState = self.readPersentPosition()
+        targetDict = {}
+
+        while runDegree < angleSet:
+            if time.time() - startTime > runDegree * self.deltaT:
+                for servo in self.id_list:
+                    if servo in [1, 3, 7, 8]:
+                        targetDict[servo] = int(initialState[servo - 1] - (directionFlagArray[servo - 1] * degToPositionalCode(runDegree)))
+                    else:
+                        targetDict[servo] = int(initialState[servo - 1] + (directionFlagArray[servo - 1] * degToPositionalCode(runDegree)))
+                runDegree += 1
+                self.writeData(ADDR_MX_GOAL_POSITION, LEN_MX_GOAL_POSITION, targetDict)
 
     # Parameter dictionary includes "repetitive: int" and "servos: list". 
     def trot(self, **paramOptions: dict):
@@ -302,13 +267,9 @@ class Lywal:
                         degToPositionalCode(desth[6][destIndex]  + 30)  + dxl[6],
                         degToPositionalCode(-desth[7][destIndex] + 210) + dxl[7]
                     ]
-
                     targetDict = {}
                     for index, servo in enumerate(targetServo):
                         targetDict[servo] = destList[index]
-
-                    print('Troting: ')
-                    print(targetDict)
                     self.writeData(ADDR_MX_GOAL_POSITION, LEN_MX_GOAL_POSITION, targetDict)
 
                     runCount += 1
