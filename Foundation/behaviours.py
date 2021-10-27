@@ -152,20 +152,6 @@ class Lywal:
                 runDegree += 1
                 self.writeData(ADDR_MX_GOAL_POSITION, LEN_MX_GOAL_POSITION, targetDict)
 
-    def rotatePositionZero(self, *servoList: list):
-        if len(servoList) != 0:
-            targetServos = servoList[0]
-
-        for clawIndex, clawValue in enumerate(self.clawState):
-            if clawValue == 0:
-                continue
-            self.manipulateClaw(-clawValue, readGroup(clawIndex + 1))
-
-        for wheelIndex, wheelValue in enumerate(self.wheelState):
-            if wheelValue % 360 == 0:
-                continue
-            self.rotateGroup(optimalResetRotation(wheelValue), readGroup(wheelIndex))
-
     def fourWheelDrive(self, rotation: int, directionArray: list):
         angleSet = rotation * 360
         directionFlagArray: list = [1, 1, 1, 1, 1, 1, 1, 1]
@@ -203,9 +189,12 @@ class Lywal:
         targetServo: list = self.id_list
         if 'servos' in paramOptions and len(paramOptions['servos']) in range(1, 8):
             targetServo = paramOptions['servos']
-        
-        destList = []        
 
+        initialState = {}
+        for index, value in enumerate(self.readPersentPosition()):
+            initialState[index] = value
+
+        destList = []
         for occurrence in range(repetitiveSet):
             runCount, desiredCount = 0, 500
             T, deltaT = 2.0, 0.2
@@ -237,7 +226,10 @@ class Lywal:
 
                     runCount += 1
 
-    def claw(self):
+        time.sleep(0.2)
+        self.writeData(ADDR_MX_GOAL_POSITION, LEN_MX_GOAL_POSITION, initialState)
+
+    def clawGrab(self):
         clawServos = [1, 2, 3, 4]
         
         # 向前滚
@@ -259,3 +251,17 @@ class Lywal:
         # 向后转
         self.rotateGroup(-240)
         time.sleep(1)
+
+    def rotatePositionZero(self, *servoList: list):
+        if len(servoList) != 0:
+            targetServos = servoList[0]
+
+        for clawIndex, clawValue in enumerate(self.clawState):
+            if clawValue == 0:
+                continue
+            self.manipulateClaw(-clawValue, readGroup(clawIndex + 1))
+
+        for wheelIndex, wheelValue in enumerate(self.wheelState):
+            if wheelValue % 360 == 0:
+                continue
+            self.rotateGroup(optimalResetRotation(wheelValue), readGroup(wheelIndex))
