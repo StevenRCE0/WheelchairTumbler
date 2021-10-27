@@ -28,6 +28,11 @@ class Lywal:
             targetServos = servoArray[0]
         if switch == 'enable':
             for id in targetServos:
+                dxl_comm_result, dxl_error = self.packetHandler.write2ByteTxRx(self.portHandler,  1,ADDR_MX_MOVING_SPEED, 1124)
+                if dxl_comm_result != COMM_SUCCESS:
+                    print("%s" % self.packetHandler.getTxRxResult(dxl_comm_result))
+                elif dxl_error != 0:
+                    print("%s" % self.packetHandler.getRxPacketError(dxl_error))
                 dxl_comm_result, dxl_error = self.packetHandler.write1ByteTxRx(self.portHandler, id, ADDR_MX_TORQUE_ENABLE, 1)
                 if dxl_comm_result != COMM_SUCCESS:
                     print("%s" % self.packetHandler.getTxRxResult(dxl_comm_result))
@@ -55,11 +60,13 @@ class Lywal:
         deltaTRange = DELTA_T_MAX - DELTA_T_MIN
         self.deltaT = clamp(DELTA_T_MAX - (deltaTRange * speedPercentage / 100), DELTA_T_MIN, DELTA_T_MAX)
 
-    def readPersentPosition(self, *targetServo: list, type: str) -> list:
+    # Option keys availiable: 
+    # targetServo=targetServos: list, targetDict=toggle: bool, degree=toggle: bool
+    def readPersentPosition(self, **options):
         dxl = []
         targetArray = self.id_list
-        if len(targetServo) > 0:
-            targetArray = targetServo
+        if 'targetServo' in options > 0:
+            targetArray = options['targetServo']
         for id in targetArray:
             dxl1_present_position, dxl_comm_result, dxl_error = self.packetHandler.read4ByteTxRx(
                 self.portHandler, id, ADDR_MX_PRESENT_POSITION
@@ -70,10 +77,16 @@ class Lywal:
             elif dxl_error != 0:
                 print("%s" % self.packetHandler.getRxPacketError(dxl_error))
                 self.switchTorque('quit')
-            if type == 'degree':
+            if 'degree' in options and options['degree'] == True:
                 dxl.append(positionalCodeToDeg(dxl1_present_position))
             else:
                 dxl.append(dxl1_present_position)
+        if 'targetDict' in options and options['targetDict'] == True:
+            dxlDict = {}
+            for index, value in enumerate(dxl):
+                dxlDict[index + 1] = value
+            return dxlDict
+
         return dxl
     
     def writeData(self, adr, adr_len, dataPairs: dict):
@@ -113,11 +126,11 @@ class Lywal:
             angleSet = -angle
             directionFlag = -1
 
-        runDegree = 0
-        startTime = time.time()
         initialState = self.readPersentPosition()
         targetDict = {}
 
+        runDegree = 0
+        startTime = time.time()
         for group in getGroup(targetArray):
             self.wheelState[group - 1] += angle
 
@@ -131,13 +144,16 @@ class Lywal:
                 runDegree += 1
                 self.writeData(ADDR_MX_GOAL_POSITION, LEN_MX_GOAL_POSITION, targetDict)
 
+        time.sleep(1)
+
     def manipulateClaw(self, angle: int, servoList):
         if len(servoList) % 2 != 0:
             print('Manipulate claw for even amount of servos at a time, we\'re not continuing... ')
             self.switchTorque('quit')
 
-        runDegree = 0
-        startTime = time.time()
+        for clawIndex in getGroup(servoList):
+            self.clawState[clawIndex - 1] += angle
+
         initialState = self.readPersentPosition()
         targetDict = {}
         angleSet, directionFlag = angle, 1
@@ -145,12 +161,16 @@ class Lywal:
             angleSet = -angle
             directionFlag = -1
 
+        runDegree = 0
+        startTime = time.time()
         while runDegree < angleSet:
             if time.time() - startTime > runDegree * self.deltaT:
                 for servo in servoList:
                     targetDict[servo] = int(initialState[servo - 1] + (directionFlag * degToPositionalCode(runDegree)))
                 runDegree += 1
                 self.writeData(ADDR_MX_GOAL_POSITION, LEN_MX_GOAL_POSITION, targetDict)
+
+        time.sleep(1)
 
     def fourWheelDrive(self, rotation: int, directionArray: list):
         angleSet = rotation * 360
@@ -160,9 +180,6 @@ class Lywal:
             directionFlagArray[servoMap[index * 2 + 2] - 1] = direction
             self.wheelState[index] += direction * rotation * 360
 
-        if self.mode != 'multi_mode':
-            print('Lywal was not set to multi mode, continuing in multi mode... ')
-            self.switchMode('multi_mode')
         runDegree = 0
         startTime = time.time()
         initialState = self.readPersentPosition()
@@ -190,11 +207,10 @@ class Lywal:
         if 'servos' in paramOptions and len(paramOptions['servos']) in range(1, 8):
             targetServo = paramOptions['servos']
 
-        initialState = {}
-        for index, value in enumerate(self.readPersentPosition()):
-            initialState[index] = value
-
+        initialState = self.readPersentPosition(degree= True, targetDict=True)
+        print('ii', initialState)
         destList = []
+
         for occurrence in range(repetitiveSet):
             runCount, desiredCount = 0, 500
             T, deltaT = 2.0, 0.2
@@ -226,6 +242,12 @@ class Lywal:
 
                     runCount += 1
 
+
+
+        aftermath: dict = self.readPersentPosition(degree= True, targetDict=True)
+        for index, (servoID, angle) in enumerate(aftermath.items()):
+            aftermath[servoID] = initialState[servoID] - angle
+
         time.sleep(0.2)
         self.writeData(ADDR_MX_GOAL_POSITION, LEN_MX_GOAL_POSITION, initialState)
 
@@ -252,16 +274,22 @@ class Lywal:
         self.rotateGroup(-240)
         time.sleep(1)
 
-    def rotatePositionZero(self, *servoList: list):
-        if len(servoList) != 0:
-            targetServos = servoList[0]
+    def rotatePositionZero(self, *servoGroups: list):
+        targetServoGroups = [1, 2, 3, 4]
+        if len(servoGroups) != 0:
+            targetServoGroups = servoGroups
 
         for clawIndex, clawValue in enumerate(self.clawState):
-            if clawValue == 0:
+            print('cidx', targetServoGroups)
+            if clawValue == 0 or (clawIndex + 1 not in targetServoGroups):
                 continue
-            self.manipulateClaw(-clawValue, readGroup(clawIndex + 1))
+            self.manipulateClaw(-clawValue, readGroup([clawIndex + 1]))
+
+        time.sleep(1)
 
         for wheelIndex, wheelValue in enumerate(self.wheelState):
-            if wheelValue % 360 == 0:
+            if wheelValue % 360 == 0 or (wheelIndex + 1 not in targetServoGroups):
                 continue
-            self.rotateGroup(optimalResetRotation(wheelValue), readGroup(wheelIndex))
+            print('widx', wheelIndex)
+            self.rotateGroup(-optimalResetRotation(wheelValue), readGroup([wheelIndex + 1]))
+        time.sleep(1)

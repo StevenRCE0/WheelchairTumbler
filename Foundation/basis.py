@@ -73,24 +73,24 @@ def optimalResetRotation(angle: int) -> int:
 
 def getGroup(servoArray: list) -> list:
     result = []
-    if [1, 2] in servoArray:
-        result.append(1)
-    if [3, 4] in servoArray:
-        result.append(2)
-    if [5, 7] in servoArray:
-        result.append(3)
-    if [6, 8] in servoArray:
-        result.append(4)
+    if 1 in servoArray and 2 in servoArray:
+        result += [1]
+    if 3 in servoArray and 4 in servoArray:
+        result += [2]
+    if 5 in servoArray and 7 in servoArray:
+        result += [3]
+    if 6 in servoArray and 8 in servoArray:
+        result += [4]
     return result
 
 def readGroup(groupArray: list) -> list:
     result = []
     if 1 in groupArray:
-        result.append(1, 2)
+        result += [1, 2]
     if 2 in groupArray:
-        result.append(3, 4)
+        result += [3, 4]
     if 3 in groupArray:
-        result.append(5, 7)
+        result += [5, 7]
     if 4 in groupArray:
-        result.append(6, 8)
+        result += [6, 8]
     return result
