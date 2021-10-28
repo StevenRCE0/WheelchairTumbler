@@ -5,6 +5,7 @@ from Foundation.device import *
 from Foundation.basis import *
 
 from dynamixel_sdk import *
+import dynamixel_sdk as dyn
 
 class Lywal:
 
@@ -167,8 +168,8 @@ class Lywal:
             if time.time() - startTime > runDegree * self.deltaT:
                 for servo in servoList:
                     targetDict[servo] = int(initialState[servo - 1] + (directionFlag * degToPositionalCode(runDegree)))
-                runDegree += 1
                 self.writeData(ADDR_MX_GOAL_POSITION, LEN_MX_GOAL_POSITION, targetDict)
+                runDegree += 1
 
         time.sleep(1)
 
@@ -274,22 +275,28 @@ class Lywal:
         self.rotateGroup(-240)
         time.sleep(1)
 
+    # TODO: Much debugging. 
     def rotatePositionZero(self, *servoGroups: list):
         targetServoGroups = [1, 2, 3, 4]
         if len(servoGroups) != 0:
             targetServoGroups = servoGroups
 
         for clawIndex, clawValue in enumerate(self.clawState):
-            print('cidx', targetServoGroups)
             if clawValue == 0 or (clawIndex + 1 not in targetServoGroups):
                 continue
+            print('Claw', clawIndex + 1, 'to reset. ')
+            print('Value', -clawValue)
             self.manipulateClaw(-clawValue, readGroup([clawIndex + 1]))
+            print('After that, the claw state is', self.clawState)
 
         time.sleep(1)
 
         for wheelIndex, wheelValue in enumerate(self.wheelState):
             if wheelValue % 360 == 0 or (wheelIndex + 1 not in targetServoGroups):
                 continue
-            print('widx', wheelIndex)
+            print('Wheel', wheelIndex, 'to reset. ')
+            print('Value', -optimalResetRotation(wheelValue))
             self.rotateGroup(-optimalResetRotation(wheelValue), readGroup([wheelIndex + 1]))
+            print('After that, the wheel state is', self.wheelState)
+
         time.sleep(1)
