@@ -196,6 +196,12 @@ class Lywal:
                 runDegree += 1
                 self.writeData(ADDR_MX_GOAL_POSITION, LEN_MX_GOAL_POSITION, targetDict)
 
+# TODO: test!
+    def manuallyResetTrot(self):
+        self.switchTorque('disable')
+        self.switchTorque('enable')
+        self.fourWheelDrive(0.2, [-1, -1, 1, 1])
+
     # Parameter dictionary includes "repetitive: int" and "servos: list". 
     def trot(self, **paramOptions: dict):
         repetitiveSet: int = 1
@@ -243,7 +249,7 @@ class Lywal:
 
                     runCount += 1
 
-
+        self.manuallyResetTrot()
 
         aftermath: dict = self.readPersentPosition(degree= True, targetDict=True)
         for index, (servoID, angle) in enumerate(aftermath.items()):
@@ -257,23 +263,23 @@ class Lywal:
         
         # 向前滚
         self.rotateGroup(120)
-        time.sleep(1)
+        time.sleep(0.3)
         
         # 前轮张开一定角度
         self.manipulateClaw(30, clawServos)
-        time.sleep(1)
+        time.sleep(0.3)
         
         # 向前滚一定角度
         self.rotateGroup(60)
-        time.sleep(1)
+        time.sleep(0.3)
         
         # 前轮夹起棍子
         self.manipulateClaw(-20, clawServos)
-        time.sleep(1)
+        time.sleep(0.3)
         
         # 向后转
         self.rotateGroup(-240)
-        time.sleep(1)
+        time.sleep(0.3)
 
     # TODO: Much debugging. 
     def rotatePositionZero(self, *servoGroups: list):
