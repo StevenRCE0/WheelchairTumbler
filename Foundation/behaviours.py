@@ -73,6 +73,7 @@ class Lywal:
                 self.portHandler, id, ADDR_MX_PRESENT_POSITION
             )
             if dxl_comm_result != COMM_SUCCESS:
+                print(id)
                 print("%s" % self.packetHandler.getTxRxResult(dxl_comm_result))
                 self.switchTorque('quit')
             elif dxl_error != 0:
@@ -145,7 +146,7 @@ class Lywal:
                 runDegree += 1
                 self.writeData(ADDR_MX_GOAL_POSITION, LEN_MX_GOAL_POSITION, targetDict)
 
-        time.sleep(1)
+        time.sleep(0.1)
 
     def manipulateClaw(self, angle: int, servoList):
         if len(servoList) % 2 != 0:
@@ -171,10 +172,10 @@ class Lywal:
                 self.writeData(ADDR_MX_GOAL_POSITION, LEN_MX_GOAL_POSITION, targetDict)
                 runDegree += 1
 
-        time.sleep(1)
+        time.sleep(0.1)
 
     def fourWheelDrive(self, rotation: int, directionArray: list):
-        angleSet = rotation * 360
+        angleSet = abs(rotation) * 360
         directionFlagArray: list = [1, 1, 1, 1, 1, 1, 1, 1]
         for index, direction in enumerate(directionArray):
             directionFlagArray[servoMap[index * 2 + 1] - 1] = direction
@@ -199,8 +200,10 @@ class Lywal:
 # TODO: test!
     def manuallyResetTrot(self):
         self.switchTorque('disable')
+        time.sleep(0.5)
         self.switchTorque('enable')
-        self.fourWheelDrive(0.2, [-1, -1, 1, 1])
+        self.fourWheelDrive(0.2, [1, 0, -1, 0])
+        self.fourWheelDrive(0.1, [0, 1, 0, -1])
 
     # Parameter dictionary includes "repetitive: int" and "servos: list". 
     def trot(self, **paramOptions: dict):
@@ -251,12 +254,12 @@ class Lywal:
 
         self.manuallyResetTrot()
 
-        aftermath: dict = self.readPersentPosition(degree= True, targetDict=True)
-        for index, (servoID, angle) in enumerate(aftermath.items()):
-            aftermath[servoID] = initialState[servoID] - angle
+        # aftermath: dict = self.readPersentPosition(degree= True, targetDict=True)
+        # for index, (servoID, angle) in enumerate(aftermath.items()):
+        #     aftermath[servoID] = initialState[servoID] - angle
 
-        time.sleep(0.2)
-        self.writeData(ADDR_MX_GOAL_POSITION, LEN_MX_GOAL_POSITION, initialState)
+        # time.sleep(0.2)
+        # self.writeData(ADDR_MX_GOAL_POSITION, LEN_MX_GOAL_POSITION, initialState)
 
     def clawGrab(self):
         clawServos = [1, 2, 3, 4]

@@ -66,10 +66,11 @@ def fancyRotate(current: int, target: int) -> int:
     return current + target
 
 def optimalResetRotation(angle: int) -> int:
-    if angle % 360 <= 180:
-        return angle % 360
-    else:
-        return 360 - (angle % 360)
+    # if angle % 360 <= 180:
+    #     return angle % 360
+    # else:
+    #     return 360 - (angle % 360)
+    return angle
 
 def getGroup(servoArray: list) -> list:
     result = []
