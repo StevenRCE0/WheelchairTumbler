@@ -149,7 +149,7 @@ enable 打开扭矩，disable 关闭扭矩，quit 用于关闭扭矩并异常退
 
 
 ### rotatePositionZero
-根据操作历史重置电机位置，仅对采样模式下的操作（爬行除外）有效。切换模式会失效。
+根据操作历史重置电机位置。**仅对采样模式下的操作（爬行除外）有效。切换模式会失效。**
 
 **参数**
 > **servoGroups**: \*list
@@ -163,7 +163,7 @@ enable 打开扭矩，disable 关闭扭矩，quit 用于关闭扭矩并异常退
 
 
 ## Basis
-Dynamixel 的默认定义。
+Dynamixel 的默认定义，详情请查阅 [Dynamixel 相关文档](https://emanual.robotis.com/docs/en/dxl/mx/mx-28)。
 
 
 ## Script Toolbox
