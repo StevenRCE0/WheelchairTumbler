@@ -11,8 +11,8 @@ class Lywal:
 
     # Robot basic parameters
     deltaT = 0.05
-    clawState = [0, 0, 0, 0]
-    wheelState = [0, 0, 0, 0]
+    __clawState__ = [0, 0, 0, 0]
+    __wheelState__ = [0, 0, 0, 0]
 
     def __init__(self, id_list: list, portHandler, packetHandler):
         self.id_list = id_list
@@ -134,7 +134,7 @@ class Lywal:
         runDegree = 0
         startTime = time.time()
         for group in getGroup(targetArray):
-            self.wheelState[group - 1] += angle
+            self.__wheelState__[group - 1] += angle
 
         while runDegree < angleSet:
             if time.time() - startTime > runDegree * self.deltaT:
@@ -154,7 +154,7 @@ class Lywal:
             self.switchTorque('quit')
 
         for clawIndex in getGroup(servoList):
-            self.clawState[clawIndex - 1] += angle
+            self.__clawState__[clawIndex - 1] += angle
 
         initialState = self.readPersentPosition()
         targetDict = {}
@@ -180,7 +180,7 @@ class Lywal:
         for index, direction in enumerate(directionArray):
             directionFlagArray[servoMap[index * 2 + 1] - 1] = direction
             directionFlagArray[servoMap[index * 2 + 2] - 1] = direction
-            self.wheelState[index] += direction * rotation * 360
+            self.__wheelState__[index] += direction * rotation * 360
 
         runDegree = 0
         startTime = time.time()
@@ -290,22 +290,22 @@ class Lywal:
         if len(servoGroups) != 0:
             targetServoGroups = servoGroups
 
-        for clawIndex, clawValue in enumerate(self.clawState):
+        for clawIndex, clawValue in enumerate(self.__clawState__):
             if clawValue == 0 or (clawIndex + 1 not in targetServoGroups):
                 continue
             print('Claw', clawIndex + 1, 'to reset. ')
             print('Value', -clawValue)
             self.manipulateClaw(-clawValue, readGroup([clawIndex + 1]))
-            print('After that, the claw state is', self.clawState)
+            print('After that, the claw state is', self.__clawState__)
 
         time.sleep(1)
 
-        for wheelIndex, wheelValue in enumerate(self.wheelState):
+        for wheelIndex, wheelValue in enumerate(self.__wheelState__):
             if wheelValue % 360 == 0 or (wheelIndex + 1 not in targetServoGroups):
                 continue
             print('Wheel', wheelIndex, 'to reset. ')
             print('Value', -optimalResetRotation(wheelValue))
             self.rotateGroup(-optimalResetRotation(wheelValue), readGroup([wheelIndex + 1]))
-            print('After that, the wheel state is', self.wheelState)
+            print('After that, the wheel state is', self.__wheelState__)
 
         time.sleep(1)

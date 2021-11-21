@@ -108,8 +108,6 @@ Robot.manipulateClaw(-50, [3, 4, 5, 7, 6, 8])
 Robot.manipulateClaw(-30, [3, 4, 5, 7])
 
 # 复位
-print('resr', Robot.wheelState)
-print('resrt', Robot.clawState)
 Robot.rotatePositionZero()
 sleep(0.5)
 
@@ -146,8 +144,6 @@ sleep(1)
 
 # 复位
 Robot.manipulateClaw(-80, [1, 2, 6, 8])
-print('resr', Robot.wheelState)
-print('resrt', Robot.clawState)
 Robot.rotatePositionZero()
 sleep(1)
 
@@ -197,8 +193,6 @@ sleep(0.2)
 
 Robot.manipulateClaw(-80, [1, 2, 3, 4, 5, 6, 7, 8])
 sleep(0.2)
-print('resr2', Robot.wheelState)
-print('resrt2', Robot.clawState)
 Robot.rotatePositionZero()
 Robot.switchTorque('disable')
 Robot.switchTorque('enable')
