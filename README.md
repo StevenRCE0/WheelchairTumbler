@@ -27,7 +27,7 @@ packetHandler 类，在 Dynamixel SDK 中提供。其实例化需提供 PROTOCOL
 根据输入切换对应伺服机的扭矩模式。
 
 **参数**
-> **switch**: str (enable|disable|quit)
+> **switch**: str ('enable' | 'disable' | 'quit')
 
 enable 打开扭矩，disable 关闭扭矩，quit 用于关闭扭矩并异常退出。
 
@@ -40,7 +40,7 @@ enable 打开扭矩，disable 关闭扭矩，quit 用于关闭扭矩并异常退
 设置采样模式下的运动速度，通过计算并修改适当的 deltaT 来实现。
 
 **参数**
-> **speedPercentage**: float|int
+> **speedPercentage**: float | int
 
 设置速度，范围为0~100。
 
@@ -161,14 +161,49 @@ enable 打开扭矩，disable 关闭扭矩，quit 用于关闭扭矩并异常退
 ## Device
 运行终端的设备配置信息。
 
+### device
+根据当前运行系统输出串口板的设备名，可能需要根据情况自行修改。
+
+### openPort
+封装的打开端口函数，有自动中止功能。
+
+**参数**
+> **definedPortHandler**: Protocol1PacketHandler | Protocol2PacketHandler
+
+提供根据 Dynamixel SDK 创建的 portHandler 实例。
+
+### closePort
+封装的关闭端口函数。
+
+**参数**
+> **definedPortHandler**: Protocol1PacketHandler | Protocol2PacketHandler
+
+提供根据 Dynamixel SDK 创建的 portHandler 实例。
+
+### setBaudRate
+设定波特率。
+
+**参数**
+> **definedPortHandler**: Protocol1PacketHandler | Protocol2PacketHandler
+
+提供根据 Dynamixel SDK 创建的 portHandler 实例。
+
+> **targetBaudRate**: int
+
+提供目标波特率，通常使用 Basis 中的定义。
+
+### getch
+根据当前运行系统和交互模式提供逐步调试所需的获取输入字符函数。当不在交互模式中调取时默认返回 'c'。
+
 
 ## Basis
-Dynamixel 的默认定义，详情请查阅 [Dynamixel 相关文档](https://emanual.robotis.com/docs/en/dxl/mx/mx-28)。
+开头为 Dynamixel 有关参数的默认定义，详情请查阅 [Dynamixel 相关文档](https://emanual.robotis.com/docs/en/dxl/mx/mx-28)。
 
+之后含有一些内部调用的小工具，非常简单，应该不用说明。
 
 ## Script Toolbox
-远程调试脚本工具。
+远程调试脚本工具，Run.sh 会按照目录结构将项目跟文件夹上传到 Lywal 主机，会忽略 Instructions 文件夹。随后在 Lywal 主机上运行 Run.sh 来执行程序。
 
 
 ## Instructions
-电机控制介绍和视觉部分介绍。
+电机控制介绍和视觉部分介绍，先前开发团队提供的指导资料。
