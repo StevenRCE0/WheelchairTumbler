@@ -157,12 +157,12 @@ enable 打开扭矩，disable 关闭扭矩，quit 用于关闭扭矩并异常退
 可选，重置轮子的编号，默认为全部。范围为1~4。
 
 
-# 🚧其它文件的指南正在编写中🚧
 ## Device
 运行终端的设备配置信息。
 
 ### device
 根据当前运行系统输出串口板的设备名，可能需要根据情况自行修改。
+
 
 ### openPort
 封装的打开端口函数，有自动中止功能。
@@ -172,6 +172,7 @@ enable 打开扭矩，disable 关闭扭矩，quit 用于关闭扭矩并异常退
 
 提供根据 Dynamixel SDK 创建的 portHandler 实例。
 
+
 ### closePort
 封装的关闭端口函数。
 
@@ -179,6 +180,7 @@ enable 打开扭矩，disable 关闭扭矩，quit 用于关闭扭矩并异常退
 > **definedPortHandler**: Protocol1PacketHandler | Protocol2PacketHandler
 
 提供根据 Dynamixel SDK 创建的 portHandler 实例。
+
 
 ### setBaudRate
 设定波特率。
@@ -200,6 +202,7 @@ enable 打开扭矩，disable 关闭扭矩，quit 用于关闭扭矩并异常退
 开头为 Dynamixel 有关参数的默认定义，详情请查阅 [Dynamixel 相关文档](https://emanual.robotis.com/docs/en/dxl/mx/mx-28)。
 
 之后含有一些内部调用的小工具，非常简单，应该不用说明。
+
 
 ## Script Toolbox
 远程调试脚本工具，Run.sh 会按照目录结构将项目跟文件夹上传到 Lywal 主机，会忽略 Instructions 文件夹。随后在 Lywal 主机上运行 Run.sh 来执行程序。
