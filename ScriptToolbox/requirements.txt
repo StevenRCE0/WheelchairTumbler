@@ -1,0 +1,3 @@
+numpy
+dynamixel_sdk
+opencv-python
