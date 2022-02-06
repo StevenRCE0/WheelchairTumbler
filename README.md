@@ -205,7 +205,16 @@ enable 打开扭矩，disable 关闭扭矩，quit 用于关闭扭矩并异常退
 
 
 ## Script Toolbox
-远程调试脚本工具，Run.sh 会按照目录结构将项目跟文件夹上传到 Lywal 主机，会忽略 Instructions 文件夹。随后在 Lywal 主机上运行 Run.sh 来执行程序。
+若干脚本工具
+
+### setup.sh
+初始化环境脚本，会按照 requirements.txt 在本地安装运行所需的依赖库。
+
+### run.sh
+按照目录结构将项目跟文件夹上传到 Lywal 主机 (会忽略 Instructions 文件夹)。随后自动在 Lywal 主机上运行 nano.sh 来执行程序。
+
+### nano.sh
+在 Lywal 上运行主程序的脚本，会按照给定的 "密码" 提权运行。
 
 
 ## Instructions
