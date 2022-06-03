@@ -17,7 +17,7 @@ def nijie(x,y) -> list:
         bbb =((r * r + 3.0 * r * r - 2.0 * r * ((3.0)**0.5) * r * math.cos(jbbab)))**0.5
         jbbba = math.acos((pow(bbb, 2) + r * r - 3.0 * r * r) / (2.0 * r * bbb))
         jobbd = math.atan(math.fabs(o[1]) / math.fabs(o[0]))
-        jobba =math.acos((bbo * bbo + r * r - r * r) / (2.0 * r * bbo))
+        jobba = math.acos((bbo * bbo + r * r - r * r) / (2.0 * r * bbo))
         jbbbo = math.acos((bbb * bbb + bbo * bbo - r * r) / (2.0 * bbb * bbo))
         theta1 = jobbd - jbbbo - jbbba
         theta2 = 2 * jbbba + theta1
